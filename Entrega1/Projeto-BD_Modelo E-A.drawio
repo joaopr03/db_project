@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2023-05-15T09:17:55.975Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36" etag="irt9zTSVM9NROxS7eHWt" version="21.3.0" type="device">
+<mxfile host="app.diagrams.net" modified="2023-05-15T12:10:39.534Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36" etag="9PXRw9gCmAVsomIWo599" version="21.2.9" type="device">
   <diagram name="Página-1" id="ItoCFEnh0fc0-_jOK2Rc">
-    <mxGraphModel dx="2927" dy="2323" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+    <mxGraphModel dx="3452" dy="2612" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -36,12 +36,6 @@
         </mxCell>
         <mxCell id="fjhzI5hMC6Ckn3JjvEL3-47" value="&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;(RI - 1)&lt;/b&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#1A1A1A;" parent="1" vertex="1">
           <mxGeometry x="626" y="137" width="60" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="fjhzI5hMC6Ckn3JjvEL3-48" value="" style="shape=waypoint;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;strokeColor=#000000;fontColor=#1A1A1A;" parent="1" vertex="1">
-          <mxGeometry x="1130" y="63" width="20" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="fjhzI5hMC6Ckn3JjvEL3-49" value="&lt;b&gt;(RI - 1): &lt;/b&gt;Um método de pagamento não pode ser seu substituto.&lt;b&gt;&amp;nbsp;&lt;/b&gt;" style="text;strokeColor=none;align=left;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#1A1A1A;" parent="1" vertex="1">
-          <mxGeometry x="1150" y="58" width="219" height="30" as="geometry" />
         </mxCell>
         <mxCell id="fjhzI5hMC6Ckn3JjvEL3-52" value="Produto" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;align=center;labelBackgroundColor=none;fillColor=#09555B;strokeColor=#BAC8D3;fontColor=#EEEEEE;" parent="1" vertex="1">
           <mxGeometry x="651" y="680" width="100" height="40" as="geometry" />
@@ -169,12 +163,6 @@
         <mxCell id="fsZiaamCpNhLpa2996Bd-16" value="&lt;font&gt;é substituto&lt;br&gt;de &amp;gt;&lt;/font&gt;" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fillColor=#CCE5FF;fontColor=#000000;" parent="1" vertex="1">
           <mxGeometry x="615" y="160" width="90" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="fsZiaamCpNhLpa2996Bd-18" value="" style="shape=waypoint;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;strokeColor=#000000;fontColor=#1A1A1A;" parent="1" vertex="1">
-          <mxGeometry x="1130" y="92" width="20" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="fsZiaamCpNhLpa2996Bd-19" value="&lt;b&gt;(RI - 2): &lt;/b&gt;O cliente tem de introduzir mais de um método de pagamento." style="text;strokeColor=none;align=left;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="1149.04" y="90" width="223.96" height="30" as="geometry" />
-        </mxCell>
         <mxCell id="fsZiaamCpNhLpa2996Bd-22" value="&lt;font&gt;efetua v&lt;/font&gt;" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fillColor=#CCE5FF;fontColor=#000000;" parent="1" vertex="1">
           <mxGeometry x="-119" y="179" width="80" height="60" as="geometry" />
         </mxCell>
@@ -236,12 +224,6 @@
         </mxCell>
         <mxCell id="fsZiaamCpNhLpa2996Bd-49" value="&lt;b&gt;(RI - 3)&lt;/b&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="408" y="160" width="60" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="fsZiaamCpNhLpa2996Bd-50" value="" style="shape=waypoint;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;strokeColor=#000000;fontColor=#1A1A1A;" parent="1" vertex="1">
-          <mxGeometry x="1131" y="122" width="20" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="fsZiaamCpNhLpa2996Bd-51" value="&lt;b&gt;(RI - 3): &lt;/b&gt;Um&amp;nbsp;cliente não pode pagar encomendas de outro cliente." style="text;strokeColor=none;align=left;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="1150.04" y="120" width="223.96" height="30" as="geometry" />
         </mxCell>
         <mxCell id="VXz65jd6t61WfwNRBwZR-2" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="fjhzI5hMC6Ckn3JjvEL3-5" target="ulnthqZ8hp1moQ3BsTgQ-2" edge="1">
           <mxGeometry relative="1" as="geometry">
@@ -485,12 +467,6 @@
         </mxCell>
         <mxCell id="9rSobXGpRNCFVjJ1lTww-28" value="&lt;b&gt;(RI - 4)&lt;/b&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="70" y="-146" width="60" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="9rSobXGpRNCFVjJ1lTww-30" value="" style="shape=waypoint;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;strokeColor=#000000;fontColor=#1A1A1A;" parent="1" vertex="1">
-          <mxGeometry x="1131" y="152" width="20" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="9rSobXGpRNCFVjJ1lTww-31" value="&lt;b&gt;(RI - 4): &lt;/b&gt;Devido a restrições de privacidade, os operadores do sistema não podem ver os nomes dos clientes." style="text;strokeColor=none;align=left;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="1150" y="156" width="239" height="30" as="geometry" />
         </mxCell>
         <mxCell id="HBzrt0_QNmEuBICVA7XL-1" value="Data da encomenda" style="ellipse;whiteSpace=wrap;html=1;align=center;labelBackgroundColor=none;fillColor=#76BCC1;strokeColor=#36393d;shadow=0;fontStyle=0" parent="1" vertex="1">
           <mxGeometry x="-80.04" y="698.5" width="100" height="40" as="geometry" />
