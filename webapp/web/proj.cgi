@@ -34,48 +34,52 @@ def homepage():
         return render_template("error_page.html", error=e)
 
 
-@app.route("/category/insert", methods=["GET"])
-def ask_category():
+@app.route("/customer/insert", methods=["GET"])
+def ask_customer():
     return exec_query(
         """
-        SELECT name FROM category
-        ORDER BY name;
+        SELECT cust_no FROM customer
+        ORDER BY cust_no;
         """,
         lambda cursor: render_template(
             "ask_input.html",
-            action_url=url_for("insert_category"),
-            title="Insert Category",
+            action_url=url_for("insert_customer"),
+            title="Insert Customer",
             fields=(
                 {
-                    "label": "New Category Name:",
+                    "label": "New Customer Number:",
+                    "cust_no": "cust_no", 
+                },
+                {
+                    "label": "New Customer Name:",
                     "name": "name",
                 },
                 {
-                    "label": "Parent Category:",
-                    "name": "parent_category",
-                    "type": "select",
-                    "required": False,
-                    "options": ((record[0], record[0]) for record in cursor),
+                    "label": "New Customer Email:",
+                    "email": "email",
+                },
+                {
+                    "label": "New Customer Phone:",
+                    "phone": "phone",
+                },
+                {
+                    "label": "New Customer Address:",
+                    "address": "address",
                 },
             ),
         ),
     )
 
 
-@app.route("/category/insert", methods=["POST"])
-def insert_category():
+@app.route("/customer/insert", methods=["POST"])
+def insert_customer():
     query = """
-        INSERT INTO category (name) VALUES (%s);
+        INSERT INTO customer VALUES (%s, %s, %s, %s, %s);
         """
-    fields = ("name",)
-    if request.form["parent_category"]:
-        query += """
-        INSERT INTO has_other (super_category, category) VALUES (%s, %s);
-        """
-        fields += ("parent_category", "name")
+    fields = ("cust_no", "name", "email", "phone", "address")
     return exec_query(
         query,
-        lambda cursor: redirect(url_for("list_category")),
+        lambda cursor: redirect(url_for("list_customer")),
         data_from_request(fields),
     )
 
@@ -201,62 +205,28 @@ def insert_retailer():
     )
 
 
-@app.route("/category")
-def list_category():
+@app.route("/customer")
+def list_customer():
     return exec_query(
         """
-        (
-            SELECT 'Simple' AS type, name, super_category AS parent_category
-            FROM simple_category
-                LEFT OUTER JOIN has_other ON has_other.category = simple_category.name
-            UNION
-            SELECT 'Super' AS type, name, super_category AS parent_category
-            FROM super_category
-                LEFT OUTER JOIN has_other ON has_other.category = super_category.name
-        ) ORDER BY name;
+        SELECT * FROM customer
         """,
         lambda cursor: render_template(
             "query.html",
             cursor=cursor,
-            title="Category",
+            title="Customer",
             chips={0: {"Simple": "#219ebc", "Super": "#fb8500"}},
             row_actions=(
                 {
-                    "className": "list",
-                    "link": lambda record: url_for(
-                        "ask_change_parent_category", category=record[1]
-                    ),
-                    "name": "Set Parent Category",
-                },
-                {
                     "className": "remove",
                     "link": lambda record: url_for(
-                        "confirm_delete_category", category=record[1]
+                        "confirm_delete_customer", customer=record[1]
                     ),
                     "name": "Remove",
                 },
             ),
             page_actions=(
-                {"title": "Insert Category", "link": url_for("ask_category")},
-            ),
-            page_top_actions=(
-                {
-                    "title": "Show All Categories",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Only Simple Categories",
-                    "link": url_for("list_simple_category"),
-                },
-                {
-                    "title": "Only Super Categories",
-                    "link": url_for("list_super_category"),
-                },
-                {
-                    "title": "Has Other",
-                    "link": url_for("list_has_other"),
-                },
+                {"title": "Insert Customer", "link": url_for("ask_customer")},
             ),
         ),
     )
@@ -782,43 +752,28 @@ def list_sales():
     )
 
 
-@app.route("/category/<string:category>/delete", methods=["GET"])
-def confirm_delete_category(category):
+@app.route("/customer/<string:customer>/delete", methods=["GET"])
+def confirm_delete_customer(customer):
     try:
         return render_template(
             "confirm_delete.html",
-            action_url=url_for("delete_category"),
-            title=f"Delete Category '{category}'?",
-            data={"category": category},
+            action_url=url_for("delete_customer"),
+            title=f"Delete Customer '{customer}'?",
+            data={"customer": customer},
         )
     except Exception as e:
         return render_template("error_page.html", error=e)
 
 
-@app.route("/category/delete", methods=["POST"])
-def delete_category():
+@app.route("/customer/delete", methods=["POST"])
+def delete_customer():
     return exec_query(
         """
-        DELETE FROM replenishment_event
-            WHERE (ean, number, serial_num, manuf) IN (
-                SELECT ean, number, serial_num, manuf FROM planogram
-                    WHERE ean IN (SELECT ean FROM product WHERE category = %s)
-                    OR (number, serial_num, manuf) IN (SELECT number, serial_num, manuf FROM shelf WHERE name = %s)
-            );
-        DELETE FROM planogram
-            WHERE ean IN (SELECT ean FROM product WHERE category = %s)
-            OR (number, serial_num, manuf) IN (SELECT number, serial_num, manuf FROM shelf WHERE name = %s);
-        DELETE FROM responsible_for WHERE cat_name = %s;
-        DELETE FROM has_category WHERE name = %s;
-        DELETE FROM product WHERE category = %s;
-        DELETE FROM shelf WHERE name = %s;
-        DELETE FROM has_other WHERE category = %s OR super_category = %s;
-        DELETE FROM super_category WHERE name = %s;
-        DELETE FROM simple_category WHERE name = %s;
-        DELETE FROM category WHERE name = %s;
+        DELETE FROM orders WHERE cust_no = %d;
+        DELETE FROM customer WHERE cust_no = %d;
         """,
-        lambda cursor: redirect(url_for("list_category")),
-        data_from_request(("category",) * 13),
+        lambda cursor: redirect(url_for("list_customer")),
+        data_from_request(("customer",) * 13),
     )
 
 
