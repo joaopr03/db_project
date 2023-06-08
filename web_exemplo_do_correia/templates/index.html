@@ -1,0 +1,29 @@
+{% extends 'partial/base.html' %}
+{% block head %}
+  <style>
+  .query-container {
+    min-width: 80%;
+  }
+  </style>
+{% endblock %}
+{% block title %}<title>Main Menu</title>{% endblock %}
+{% block content %}
+  <h1 class="text-center">Projeto de BD - 2021/2022</h1>
+  <div class="container">
+    <a class="button" href="{{ url_for('list_category') }}">Category</a>
+    <a class="button" href="{{ url_for('list_simple_category') }}">Simple Category</a>
+    <a class="button" href="{{ url_for('list_super_category') }}">Super Category</a>
+    <a class="button" href="{{ url_for('list_has_other') }}">Has Other</a>
+    <a class="button" href="{{ url_for('list_product') }}">Product</a>
+    <a class="button" href="{{ url_for('list_has_category') }}">Has Category</a>
+    <a class="button" href="{{ url_for('list_ivm') }}">IVM</a>
+    <a class="button" href="{{ url_for('list_retail_point') }}">Retail Point</a>
+    <a class="button" href="{{ url_for('list_installed_on') }}">Installed On</a>
+    <a class="button" href="{{ url_for('list_shelf') }}">Shelf</a>
+    <a class="button" href="{{ url_for('list_planogram') }}">Planogram</a>
+    <a class="button" href="{{ url_for('list_retailer') }}">Retailer</a>
+    <a class="button" href="{{ url_for('list_responsible_for') }}">Responsible For</a>
+    <a class="button" href="{{ url_for('list_replenishment_event') }}">Replenishment Event</a>
+    <a class="button" href="{{ url_for('list_sales') }}">Past Sales</a>
+  </div>
+{% endblock %}
