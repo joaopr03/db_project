@@ -33,54 +33,59 @@ def homepage():
     except Exception as e:
         return render_template("error_page.html", error=e)
 
-
 @app.route("/customer/insert", methods=["GET"])
 def ask_customer():
-    return exec_query(
-        """
-        SELECT cust_no FROM customer
-        ORDER BY cust_no;
-        """,
-        lambda cursor: render_template(
+    try:
+        return render_template(
             "ask_input.html",
             action_url=url_for("insert_customer"),
             title="Insert Customer",
             fields=(
                 {
                     "label": "New Customer Number:",
-                    "cust_no": "cust_no", 
+                    "name": "cust_no",
+                    "required": True,
                 },
                 {
                     "label": "New Customer Name:",
                     "name": "name",
+                    "required": True,
                 },
                 {
                     "label": "New Customer Email:",
-                    "email": "email",
+                    "name": "email",
+                    "required": False,
                 },
                 {
                     "label": "New Customer Phone:",
-                    "phone": "phone",
+                    "name": "phone",
+                    "required": False,
                 },
                 {
                     "label": "New Customer Address:",
-                    "address": "address",
+                    "name": "address",
+                    "required": False,
                 },
             ),
-        ),
-    )
+        )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
 
 
 @app.route("/customer/insert", methods=["POST"])
 def insert_customer():
-    query = """
-        INSERT INTO customer VALUES (%s, %s, %s, %s, %s);
-        """
-    fields = ("cust_no", "name", "email", "phone", "address")
     return exec_query(
-        query,
+        """
+        INSERT INTO customer (cust_no, name, email, phone, address) VALUES (%s, %s, %s, %s, %s);
+        """,
         lambda cursor: redirect(url_for("list_customer")),
-        data_from_request(fields),
+        (
+            request.form["cust_no"],
+            request.form["name"],
+            request.form["email"],
+            request.form["phone"],
+            request.form["address"],
+        ),
     )
 
 
