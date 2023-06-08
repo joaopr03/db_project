@@ -225,7 +225,7 @@ def list_customer():
                 {
                     "className": "remove",
                     "link": lambda record: url_for(
-                        "confirm_delete_customer", customer=record[1]
+                        "confirm_delete_customer", customer=record[0]
                     ),
                     "name": "Remove",
                 },
@@ -764,7 +764,7 @@ def confirm_delete_customer(customer):
             "confirm_delete.html",
             action_url=url_for("delete_customer"),
             title=f"Delete Customer '{customer}'?",
-            data={"customer": customer},
+            data={"cust_no": customer},
         )
     except Exception as e:
         return render_template("error_page.html", error=e)
@@ -774,11 +774,12 @@ def confirm_delete_customer(customer):
 def delete_customer():
     return exec_query(
         """
-        DELETE FROM orders WHERE cust_no = %d;
-        DELETE FROM customer WHERE cust_no = %d;
+        DELETE FROM customer WHERE cust_no = %s;
         """,
         lambda cursor: redirect(url_for("list_customer")),
-        data_from_request(("customer",) * 13),
+        (
+            request.form["cust_no"],
+        ),
     )
 
 
