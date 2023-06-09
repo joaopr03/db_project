@@ -89,127 +89,6 @@ def insert_customer():
     )
 
 
-@app.route("/category/<string:category>/change-parent", methods=["GET"])
-def ask_change_parent_category(category):
-    def first_or_none(result):
-        return result[0] if result else None
-
-    return exec_queries(
-        (
-            """
-            SELECT name FROM category
-            WHERE name != %s
-            ORDER BY name;
-            """,
-            """
-            SELECT super_category FROM has_other
-            WHERE category = %s;
-            """,
-        ),
-        lambda cursors: render_template(
-            "ask_input.html",
-            action_url=url_for("change_parent_category"),
-            title="Change Parent of Category",
-            fields=(
-                {
-                    "label": "",
-                    "name": "name",
-                    "type": "hidden",
-                    "value": category,
-                },
-                {
-                    "label": "Parent Category:",
-                    "name": "parent_category",
-                    "type": "select",
-                    "required": False,
-                    "options": ((record[0], record[0]) for record in cursors[0]),
-                    "selected": first_or_none(cursors[1].fetchone()),
-                },
-            ),
-        ),
-        (
-            (category,),
-            (category,),
-        ),
-    )
-
-
-@app.route("/category/change-parent", methods=["POST"])
-def change_parent_category():
-    query = """
-        DELETE FROM has_other WHERE category = %s;
-        """
-    fields = ("name",)
-    if request.form["parent_category"]:
-        query = """
-        INSERT INTO has_other (super_category, category) VALUES (%s, %s)
-        ON CONFLICT (category) DO UPDATE SET super_category = %s;
-        """
-        fields = ("parent_category", "name", "parent_category")
-    return exec_query(
-        query,
-        lambda cursor: redirect(url_for("list_category")),
-        data_from_request(fields),
-    )
-
-
-@app.route("/category/<string:super_category>/list-children", methods=["GET"])
-def list_sub_categories(super_category):
-    return exec_query(
-        """
-        WITH RECURSIVE list_recurs(super_category, category) AS (
-            SELECT super_category, category
-            FROM has_other
-            WHERE super_category = %s
-            UNION ALL
-            SELECT child.super_category, child.category
-            FROM has_other AS child
-                INNER JOIN list_recurs AS parent ON child.super_category = parent.category
-        ) SELECT category AS sub_categories FROM list_recurs;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title=f"List Sub-Categories of '{super_category}'",
-            page_actions=({"title": "Back", "link": url_for("list_super_category")},),
-        ),
-        (super_category,),
-    )
-
-
-@app.route("/retailer/insert", methods=["GET"])
-def ask_retailer():
-    try:
-        return render_template(
-            "ask_input.html",
-            action_url=url_for("insert_retailer"),
-            title="Insert Retailer",
-            fields=(
-                {
-                    "label": "New Retailer TIN:",
-                    "name": "tin",
-                },
-                {
-                    "label": "New Retailer Name:",
-                    "name": "name",
-                },
-            ),
-        )
-    except Exception as e:
-        return render_template("error_page.html", error=e)
-
-
-@app.route("/retailer/insert", methods=["POST"])
-def insert_retailer():
-    return exec_query(
-        """
-        INSERT INTO retailer (tin, name) VALUES (%s, %s);
-        """,
-        lambda cursor: redirect(url_for("list_retailer")),
-        data_from_request(("tin", "name")),
-    )
-
-
 @app.route("/customer")
 def list_customer():
     return exec_query(
@@ -220,7 +99,6 @@ def list_customer():
             "query.html",
             cursor=cursor,
             title="Customer",
-            chips={0: {"Simple": "#219ebc", "Super": "#fb8500"}},
             row_actions=(
                 {
                     "className": "remove",
@@ -233,526 +111,6 @@ def list_customer():
             page_actions=(
                 {"title": "Insert Customer", "link": url_for("ask_customer")},
             ),
-        ),
-    )
-
-
-@app.route("/category/simple")
-def list_simple_category():
-    return exec_query(
-        """
-        SELECT name FROM simple_category
-        ORDER BY name;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Simple Category",
-            row_actions=(
-                {
-                    "className": "remove",
-                    "link": lambda record: url_for(
-                        "confirm_delete_category", category=record[0]
-                    ),
-                    "name": "Remove",
-                },
-            ),
-            page_actions=(
-                {"title": "Insert Category", "link": url_for("ask_category")},
-            ),
-            page_top_actions=(
-                {
-                    "title": "Show All Categories",
-                    "link": url_for("list_category"),
-                },
-                {
-                    "title": "Only Simple Categories",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Only Super Categories",
-                    "link": url_for("list_super_category"),
-                },
-                {
-                    "title": "Has Other",
-                    "link": url_for("list_has_other"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/category/super")
-def list_super_category():
-    return exec_query(
-        """
-        SELECT name FROM super_category
-        ORDER BY name;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Super Category",
-            row_actions=(
-                {
-                    "className": "list",
-                    "link": lambda record: url_for(
-                        "list_sub_categories", super_category=record[0]
-                    ),
-                    "name": "List Sub-Categories",
-                },
-                {
-                    "className": "remove",
-                    "link": lambda record: url_for(
-                        "confirm_delete_category", category=record[0]
-                    ),
-                    "name": "Remove",
-                },
-            ),
-            page_actions=(
-                {"title": "Insert Category", "link": url_for("ask_category")},
-            ),
-            page_top_actions=(
-                {
-                    "title": "Show All Categories",
-                    "link": url_for("list_category"),
-                },
-                {
-                    "title": "Only Simple Categories",
-                    "link": url_for("list_simple_category"),
-                },
-                {
-                    "title": "Only Super Categories",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Has Other",
-                    "link": url_for("list_has_other"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/category/has-other")
-def list_has_other():
-    return exec_query(
-        """
-        SELECT super_category, category FROM has_other
-        ORDER BY super_category, category;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Has Other",
-            page_top_actions=(
-                {
-                    "title": "Show All Categories",
-                    "link": url_for("list_category"),
-                },
-                {
-                    "title": "Only Simple Categories",
-                    "link": url_for("list_simple_category"),
-                },
-                {
-                    "title": "Only Super Categories",
-                    "link": url_for("list_super_category"),
-                },
-                {
-                    "title": "Has Other",
-                    "link": "#",
-                    "active": True,
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/product")
-def list_product():
-    return exec_query(
-        """
-        SELECT ean AS "EAN", category, description FROM product;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Product",
-            page_top_actions=(
-                {
-                    "title": "Product",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Has Category",
-                    "link": url_for("list_has_category"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/product/has-category")
-def list_has_category():
-    return exec_query(
-        """
-        SELECT ean AS "EAN", name AS category_name FROM has_category;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Has Category",
-            page_top_actions=(
-                {
-                    "title": "Product",
-                    "link": url_for("list_product"),
-                },
-                {
-                    "title": "Has Category",
-                    "link": "#",
-                    "active": True,
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/ivm")
-def list_ivm():
-    return exec_query(
-        """
-        SELECT serial_num AS serial_number, manuf AS manufacturer FROM ivm;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="IVM",
-            row_actions=(
-                {
-                    "className": "list",
-                    "link": lambda record: url_for(
-                        "list_replenishment_event_ivm",
-                        serial_num=record[0],
-                        manuf=record[1],
-                    ),
-                    "name": "List Replenishment Events",
-                },
-            ),
-            page_top_actions=(
-                {
-                    "title": "IVM",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Installed On",
-                    "link": url_for("list_installed_on"),
-                },
-                {
-                    "title": "Shelf",
-                    "link": url_for("list_shelf"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/retail-point")
-def list_retail_point():
-    return exec_query(
-        """
-        SELECT name, district, county FROM retail_point;
-        """,
-        lambda cursor: render_template(
-            "query.html", cursor=cursor, title="Retail Point"
-        ),
-    )
-
-
-@app.route("/ivm/installed-on")
-def list_installed_on():
-    return exec_query(
-        """
-        SELECT serial_num AS serial_number, manuf AS manufacturer, local FROM installed_on;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Installed On",
-            page_top_actions=(
-                {
-                    "title": "IVM",
-                    "link": url_for("list_ivm"),
-                },
-                {
-                    "title": "Installed On",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Shelf",
-                    "link": url_for("list_shelf"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/ivm/shelf")
-def list_shelf():
-    return exec_query(
-        """
-        SELECT number, serial_num AS serial_number, manuf AS manufacturer, height, name FROM shelf;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Shelf",
-            page_top_actions=(
-                {
-                    "title": "IVM",
-                    "link": url_for("list_ivm"),
-                },
-                {
-                    "title": "Installed On",
-                    "link": url_for("list_installed_on"),
-                },
-                {
-                    "title": "Shelf",
-                    "link": "#",
-                    "active": True,
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/product/planogram")
-def list_planogram():
-    return exec_query(
-        """
-        SELECT ean AS "EAN", number, serial_num AS serial_number, manuf AS manufacturer, face, units, loc
-        FROM planogram;
-        """,
-        lambda cursor: render_template("query.html", cursor=cursor, title="Planogram"),
-    )
-
-
-@app.route("/retailer")
-def list_retailer():
-    return exec_query(
-        """
-        SELECT tin AS "TIN", name FROM retailer;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Retailer",
-            row_actions=(
-                {
-                    "className": "remove",
-                    "link": lambda record: url_for(
-                        "confirm_delete_retailer", tin=record[0]
-                    ),
-                    "name": "Remove",
-                },
-            ),
-            page_actions=(
-                {"title": "Insert Retailer", "link": url_for("ask_retailer")},
-            ),
-            page_top_actions=(
-                {
-                    "title": "Retailer",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Responsible For",
-                    "link": url_for("list_responsible_for"),
-                },
-                {
-                    "title": "Replenishment Event",
-                    "link": url_for("list_replenishment_event"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/retailer/responsible-for")
-def list_responsible_for():
-    return exec_query(
-        """
-        SELECT cat_name AS category_name, tin AS "TIN", serial_num AS serial_number, manuf AS manufacturer
-        FROM responsible_for;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Responsible For",
-            page_actions=(
-                {
-                    "title": "Insert Responsibility",
-                    "link": url_for("ask_responsibility"),
-                },
-            ),
-            page_top_actions=(
-                {
-                    "title": "Retailer",
-                    "link": url_for("list_retailer"),
-                },
-                {
-                    "title": "Responsible For",
-                    "link": "#",
-                    "active": True,
-                },
-                {
-                    "title": "Replenishment Event",
-                    "link": url_for("list_replenishment_event"),
-                },
-            ),
-        ),
-    )
-
-
-@app.route("/responsible_for/insert", methods=["GET"])
-def ask_responsibility():
-
-    return exec_queries(
-        (
-            """
-            SELECT name FROM category
-            ORDER BY name;
-            """,
-            """
-            SELECT tin FROM retailer;
-            """,
-            """
-            SELECT serial_num, manuf FROM ivm EXCEPT (SELECT serial_num, manuf FROM responsible_for)
-            ORDER BY manuf, serial_num;
-            """,
-        ),
-        lambda cursors: render_template(
-            "ask_input.html",
-            action_url=url_for("insert_responsibility"),
-            title="Insert Responsibility",
-            fields=(
-                {
-                    "label": "Category Name:",
-                    "name": "cat_name",
-                    "type": "select",
-                    "required": True,
-                    "options": ((record[0], record[0]) for record in cursors[0]),
-                },
-                {
-                    "label": "Retailer TIN:",
-                    "name": "tin",
-                    "type": "select",
-                    "required": True,
-                    "options": ((record[0], record[0]) for record in cursors[1]),
-                },
-                {
-                    "label": "IVM:",
-                    "name": "ivm",
-                    "type": "select",
-                    "required": True,
-                    "options": (
-                        (
-                            str(quote(record[0]) + "&" + quote(record[1])),
-                            str(f"{record[0]} | {record[1]}"),
-                        )
-                        for record in cursors[2]
-                    ),
-                },
-            ),
-        ),
-        ((), (), ()),
-    )
-
-
-@app.route("/responsible_for/insert", methods=["POST"])
-def insert_responsibility():
-    return exec_query(
-        """
-        INSERT INTO responsible_for (cat_name, tin, serial_num, manuf) VALUES (%s, %s, %s, %s);
-        """,
-        lambda cursor: redirect(url_for("list_responsible_for")),
-        (
-            request.form["cat_name"],
-            request.form["tin"],
-            *map(unquote, request.form["ivm"].split("&")),
-        ),
-    )
-
-
-@app.route("/ivm/replenishment-event")
-def list_replenishment_event():
-    return exec_query(
-        """
-        SELECT ean AS "EAN", number, serial_num AS serial_number, manuf AS manufacturer, instant, units, tin AS "TIN"
-        FROM replenishment_event;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="Replenishment Event",
-            page_top_actions=(
-                {
-                    "title": "Retailer",
-                    "link": url_for("list_retailer"),
-                },
-                {
-                    "title": "Responsible For",
-                    "link": url_for("list_responsible_for"),
-                },
-                {
-                    "title": "Replenishment Event",
-                    "link": "#",
-                    "active": True,
-                },
-            ),
-        ),
-    )
-
-
-@app.route(
-    "/ivm/<string:serial_num>/<string:manuf>/replenishment-event", methods=["GET"]
-)
-def list_replenishment_event_ivm(serial_num, manuf):
-    return exec_query(
-        """
-        SELECT ean AS "EAN", name AS category_name, number, serial_num AS serial_number,
-            manuf as manufacturer, instant, SUM(units) AS total_units, tin AS "TIN"
-        FROM replenishment_event
-        NATURAL JOIN has_category
-        WHERE serial_num = %s AND manuf = %s
-        GROUP BY GROUPING SETS((ean, name, number, serial_num, manuf, instant, tin), name)
-        ORDER BY (name)
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="List Replenishment Events of IVM",
-            page_actions=({"title": "Back", "link": url_for("list_ivm")},),
-        ),
-        (serial_num, manuf),
-    )
-
-
-@app.route("/sales", methods=["GET"])
-def list_sales():
-    return exec_query(
-        """
-        SELECT ean AS "EAN", category_name, year, quarter, month, day_month, day_week, district, county, units
-        FROM sales;
-        """,
-        lambda cursor: render_template(
-            "query.html",
-            cursor=cursor,
-            title="View Past Sales",
         ),
     )
 
@@ -795,36 +153,332 @@ def delete_customer():
     )
 
 
-@app.route("/retailer/<string:tin>/delete", methods=["GET"])
-def confirm_delete_retailer(tin):
+@app.route("/product/insert", methods=["GET"])
+def ask_product():
     try:
         return render_template(
-            "confirm_delete.html",
-            action_url=url_for("delete_retailer"),
-            title=f"Delete Retailer with TIN '{tin}'?",
-            data={"tin": tin},
+            "ask_input.html",
+            action_url=url_for("insert_product"),
+            title="Insert Product",
+            fields=(
+                {
+                    "label": "New Product SKU:",
+                    "name": "sku",
+                    "required": True,
+                },
+                {
+                    "label": "New Product Name:",
+                    "name": "name",
+                    "required": True,
+                },
+                {
+                    "label": "New Product Description:",
+                    "name": "description",
+                    "required": False,
+                },
+                {
+                    "label": "New Product Price:",
+                    "name": "price",
+                    "required": True,
+                },
+                {
+                    "label": "New Product EAN:",
+                    "name": "ean",
+                    "required": False,
+                },
+            ),
         )
     except Exception as e:
         return render_template("error_page.html", error=e)
 
 
-@app.route("/retailer/delete", methods=["POST"])
-def delete_retailer():
+@app.route("/product/insert", methods=["POST"])
+def insert_product():
     return exec_query(
         """
-        DELETE FROM replenishment_event WHERE tin = %s;
-        DELETE FROM responsible_for WHERE tin = %s;
-        DELETE FROM retailer WHERE tin = %s;
+        INSERT INTO product (sku, name, description, price, ean) VALUES (%s, %s, %s, %s, %s);
         """,
-        lambda cursor: redirect(url_for("list_retailer")),
-        data_from_request(("tin", "tin", "tin")),
+        lambda cursor: redirect(url_for("list_product")),
+        (
+            request.form["sku"],
+            request.form["name"],
+            request.form["description"],
+            request.form["price"],
+            request.form["ean"],
+        ),
     )
 
+
+@app.route("/product")
+def list_product():
+    return exec_query(
+        """
+        SELECT * FROM product
+        """,
+        lambda cursor: render_template(
+            "query.html",
+            cursor=cursor,
+            title="Product",
+            row_actions=(
+                {
+                    "className": "remove",
+                    "link": lambda record: url_for(
+                        "confirm_delete_product", product=record[0]
+                    ),
+                    "name": "Remove",
+                },
+            ),
+            page_actions=(
+                {"title": "Insert Product", "link": url_for("ask_product")},
+            ),
+        ),
+    )
+
+
+@app.route("/product/<string:product>/delete", methods=["GET"])
+def confirm_delete_product(product):
+    try:
+        return render_template(
+            "confirm_delete.html",
+            action_url=url_for("delete_product"),
+            title=f"Delete Product '{product}'?",
+            data={"sku": product},
+        )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
+
+
+@app.route("/product/delete", methods=["POST"])
+def delete_product():
+    return exec_query(
+        """
+        DELETE FROM supplier WHERE sku = %s;
+        DELETE FROM contains WHERE sku = %s;
+        DELETE FROM product WHERE sku = %s;
+        """,
+        lambda cursor: redirect(url_for("list_product")),
+        (
+            request.form["sku"],
+            request.form["sku"],
+            request.form["sku"],
+        ),
+    )
+
+
+@app.route("/supplier/insert", methods=["GET"])
+def ask_supplier():
+    return exec_query(
+        """
+        SELECT sku FROM product
+        ORDER BY sku;
+        """,
+        lambda cursor: render_template(
+            "ask_input.html",
+            action_url=url_for("insert_supplier"),
+            title="Insert Supplier",
+            fields=(
+                {
+                    "label": "New Supplier TIN:",
+                    "name": "tin",
+                    "required": True,
+                },
+                {
+                    "label": "New Supplier Name:",
+                    "name": "name",
+                    "required": False,
+                },
+                {
+                    "label": "New Supplier Address:",
+                    "name": "address",
+                    "required": False,
+                },
+                {
+                    "label": "Product SKU:",
+                    "name": "sku",
+                    "type": "select",
+                    "required": True,
+                    "options": ((record[0], record[0]) for record in cursor),
+                },
+                {
+                    "label": "New Supplier Date:",
+                    "name": "date",
+                    "required": False,
+                },
+            ),
+        ),
+    )
+
+
+@app.route("/supplier/insert", methods=["POST"])
+def insert_supplier():
+    return exec_query(
+        """
+        INSERT INTO supplier (tin, name, address, sku, date) VALUES (%s, %s, %s, %s, %s);
+        """,
+        lambda cursor: redirect(url_for("list_supplier")),
+        (
+            request.form["tin"],
+            request.form["name"],
+            request.form["address"],
+            request.form["sku"],
+            request.form["date"],
+        ),
+    )
+
+
+@app.route("/supplier")
+def list_supplier():
+    return exec_query(
+        """
+        SELECT * FROM supplier
+        """,
+        lambda cursor: render_template(
+            "query.html",
+            cursor=cursor,
+            title="Supplier",
+            row_actions=(
+                {
+                    "className": "remove",
+                    "link": lambda record: url_for(
+                        "confirm_delete_supplier", supplier=record[0]
+                    ),
+                    "name": "Remove",
+                },
+            ),
+            page_actions=(
+                {"title": "Insert supplier", "link": url_for("ask_supplier")},
+            ),
+        ),
+    )
+
+
+@app.route("/supplier/<string:supplier>/delete", methods=["GET"])
+def confirm_delete_supplier(supplier):
+    try:
+        return render_template(
+            "confirm_delete.html",
+            action_url=url_for("delete_supplier"),
+            title=f"Delete supplier '{supplier}'?",
+            data={"tin": supplier},
+        )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
+
+
+@app.route("/supplier/delete", methods=["POST"])
+def delete_supplier():
+    return exec_query(
+        """
+        DELETE FROM delivery WHERE tin = %s;
+        DELETE FROM supplier WHERE tin = %s;
+        """,
+        lambda cursor: redirect(url_for("list_supplier")),
+        (
+            request.form["tin"],
+            request.form["tin"],
+        ),
+    )
+
+
+@app.route("/orders/insert", methods=["GET"])
+def ask_orders():
+    return exec_query(
+        """
+        SELECT cust_no FROM customer
+        ORDER BY cust_no;
+        """,
+        lambda cursor: render_template(
+            "ask_input.html",
+            action_url=url_for("insert_orders"),
+            title="Insert Orders",
+            fields=(
+                {
+                    "label": "New Orders Number:",
+                    "name": "order_no",
+                    "required": True,
+                },
+                {
+                    "label": "Customer Number:",
+                    "name": "cust_no",
+                    "type": "select",
+                    "required": True,
+                    "options": ((record[0], record[0]) for record in cursor),
+                },
+                {
+                    "label": "New Orders Date:",
+                    "name": "date",
+                    "required": False,
+                },
+                #inserir skus e quantidades não sei como
+            ),
+        ),
+    )
+
+
+@app.route("/orders/insert", methods=["POST"])
+def insert_orders():
+    return exec_query(
+        """
+        INSERT INTO contains (order_no, sku, qty) VALUES (%s, %s, %s);
+        INSERT INTO orders (order_no, cust_no, date) VALUES (%s, %s, %s);
+        """,
+        lambda cursor: redirect(url_for("list_orders")),
+        (
+            request.form["order_no"],
+            request.form["sku"],
+            request.form["qty"],
+            request.form["order_no"],
+            request.form["cust_no"],
+            request.form["date"],
+        ),
+    )
+
+
+@app.route("/orders")
+def list_orders():
+    return exec_query(
+        """
+        SELECT * FROM orders
+        """,
+        lambda cursor: render_template(
+            "query.html",
+            cursor=cursor,
+            title="Orders",
+            row_actions=(
+                {
+                    "className": "remove",
+                    "link": lambda record: url_for(
+                        "confirm_pay", orders=record[0]
+                    ),
+                    "name": "Pay",
+                },
+            ),
+            page_actions=(
+                {"title": "Insert orders", "link": url_for("ask_orders")},
+            ),
+        ),
+    )
+
+@app.route("/orders/pay")
+def confirm_pay():
+    pass
+
+@app.route("/pay")
+def list_pay():
+    return exec_query(
+        """
+        SELECT * FROM pay
+        """,
+        lambda cursor: render_template(
+            "query.html",
+            cursor=cursor,
+            title="Pay",
+        ),
+    )
 
 ###############
 #    Utils    #
 ###############
-
 
 def exec_query(query, outcome, data=None):
     return exec_queries((query,), lambda cursors: outcome(cursors[0]), (data,))
@@ -863,9 +517,7 @@ def exec_queries(queries, outcome, data):
             cursor.close()
         dbConn.close()
 
-
 def data_from_request(fields):
     return tuple(map(lambda field: request.form[field], fields))
-
 
 CGIHandler().run(app)
