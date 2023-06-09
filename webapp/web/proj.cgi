@@ -774,10 +774,22 @@ def confirm_delete_customer(customer):
 def delete_customer():
     return exec_query(
         """
+        DELETE FROM process WHERE order_no IN (
+            SELECT order_no FROM process INNER JOIN orders USING(order_no) WHERE cust_no = %s
+        );
+        DELETE FROM contains WHERE order_no IN (
+            SELECT order_no FROM contains INNER JOIN orders USING(order_no) WHERE cust_no = %s
+        );
+        DELETE FROM pay WHERE cust_no = %s;
+        DELETE FROM orders WHERE cust_no = %s;
         DELETE FROM customer WHERE cust_no = %s;
         """,
         lambda cursor: redirect(url_for("list_customer")),
         (
+            request.form["cust_no"],
+            request.form["cust_no"],
+            request.form["cust_no"],
+            request.form["cust_no"],
             request.form["cust_no"],
         ),
     )
