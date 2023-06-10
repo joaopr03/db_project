@@ -54,7 +54,7 @@ def ask_customer():
                 {
                     "label": "New Customer Email:",
                     "name": "email",
-                    "required": False,
+                    "required": True,
                 },
                 {
                     "label": "New Customer Phone:",
@@ -74,19 +74,16 @@ def ask_customer():
 
 @app.route("/customer/insert", methods=["POST"])
 def insert_customer():
-    return exec_query(
-        """
+    query = """
         INSERT INTO customer (cust_no, name, email, phone, address) VALUES (%s, %s, %s, %s, %s);
-        """,
+        """
+    fields = ("cust_no", "name", "email", "phone", "address")
+    return exec_query(
+        query,
         lambda cursor: redirect(url_for("list_customer")),
-        (
-            request.form["cust_no"],
-            request.form["name"],
-            request.form["email"],
-            request.form["phone"],
-            request.form["address"],
-        ),
+        data_from_request(fields),
     )
+
 
 
 @app.route("/customer")
@@ -252,12 +249,25 @@ def confirm_delete_product(product):
 def delete_product():
     return exec_query(
         """
+        DELETE FROM delivery WHERE tin IN (
+            SELECT tin FROM supplier WHERE sku = %s
+        );
         DELETE FROM supplier WHERE sku = %s;
         DELETE FROM contains WHERE sku = %s;
+        DELETE FROM process WHERE order_no NOT IN (
+            SELECT order_no FROM contains
+        );
+        DELETE FROM pay WHERE order_no NOT IN (
+            SELECT order_no FROM contains
+        );
+        DELETE FROM orders WHERE order_no NOT IN (
+            SELECT order_no FROM contains
+        );
         DELETE FROM product WHERE sku = %s;
         """,
         lambda cursor: redirect(url_for("list_product")),
         (
+            request.form["sku"],
             request.form["sku"],
             request.form["sku"],
             request.form["sku"],
