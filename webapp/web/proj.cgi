@@ -75,9 +75,19 @@ def ask_customer():
 @app.route("/customer/insert", methods=["POST"])
 def insert_customer():
     query = """
-        INSERT INTO customer (cust_no, name, email, phone, address) VALUES (%s, %s, %s, %s, %s);
+        INSERT INTO customer (cust_no, name, email) VALUES (%s, %s, %s);
         """
-    fields = ("cust_no", "name", "email", "phone", "address")
+    fields = ("cust_no", "name", "email")
+    if request.form["phone"]:
+        query += """
+            UPDATE customer SET phone = %s WHERE cust_no = %s;
+            """
+        fields += ("phone", "cust_no")
+    if request.form["address"]:
+        query += """
+            UPDATE customer SET address = %s WHERE cust_no = %s;
+            """
+        fields += ("address", "cust_no")
     return exec_query(
         query,
         lambda cursor: redirect(url_for("list_customer")),
@@ -127,8 +137,7 @@ def confirm_delete_customer(customer):
 
 @app.route("/customer/delete", methods=["POST"])
 def delete_customer():
-    return exec_query(
-        """
+    query = """
         DELETE FROM process WHERE order_no IN (
             SELECT order_no FROM process INNER JOIN orders USING(order_no) WHERE cust_no = %s
         );
@@ -138,15 +147,12 @@ def delete_customer():
         DELETE FROM pay WHERE cust_no = %s;
         DELETE FROM orders WHERE cust_no = %s;
         DELETE FROM customer WHERE cust_no = %s;
-        """,
+        """
+    fields = ("cust_no", "cust_no", "cust_no", "cust_no", "cust_no")
+    return exec_query(
+        query,
         lambda cursor: redirect(url_for("list_customer")),
-        (
-            request.form["cust_no"],
-            request.form["cust_no"],
-            request.form["cust_no"],
-            request.form["cust_no"],
-            request.form["cust_no"],
-        ),
+        data_from_request(fields),
     )
 
 
@@ -191,18 +197,24 @@ def ask_product():
 
 @app.route("/product/insert", methods=["POST"])
 def insert_product():
-    return exec_query(
+    query = """
+        INSERT INTO product (sku, name, price) VALUES (%s, %s, %s);
         """
-        INSERT INTO product (sku, name, description, price, ean) VALUES (%s, %s, %s, %s, %s);
-        """,
+    fields = ("sku", "name", "price")
+    if request.form["description"]:
+        query += """
+            UPDATE product SET description = %s WHERE sku = %s;
+            """
+        fields += ("description", "sku")
+    if request.form["ean"]:
+        query += """
+            UPDATE product SET ean = %s WHERE sku = %s;
+            """
+        fields += ("ean", "sku")
+    return exec_query(
+        query,
         lambda cursor: redirect(url_for("list_product")),
-        (
-            request.form["sku"],
-            request.form["name"],
-            request.form["description"],
-            request.form["price"],
-            request.form["ean"],
-        ),
+        data_from_request(fields),
     )
 
 
@@ -218,6 +230,13 @@ def list_product():
             title="Product",
             row_actions=(
                 {
+                    "className": "change",
+                    "link": lambda record: url_for(
+                        "ask_change_product", product=record[0]
+                    ),
+                    "name": "Change",
+                },
+                {
                     "className": "remove",
                     "link": lambda record: url_for(
                         "confirm_delete_product", product=record[0]
@@ -229,6 +248,53 @@ def list_product():
                 {"title": "Insert Product", "link": url_for("ask_product")},
             ),
         ),
+    )
+
+@app.route("/product/<string:product>/change", methods=["GET"])
+def ask_change_product(product):
+    try:
+        return render_template(
+            "ask_input.html",
+            action_url=url_for("change_product"),
+            title=f"Change Product '{product}'?",
+            fields=(
+                {
+                    "label": "",
+                    "name": "sku",
+                    "type": "hidden",
+                    "value": product,
+                },
+                {
+                    "label": "New Product Description:",
+                    "name": "description",
+                    "required": False,
+                },
+                {
+                    "label": "New Product Price:",
+                    "name": "price",
+                    "required": True,
+                },
+            ),
+        )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
+    
+@app.route("/product/change", methods=["POST"])
+def change_product():
+    if request.form["description"]:
+        query = """
+            UPDATE product SET description = %s, price = %s WHERE sku = %s;
+            """
+        fields = ("description","price","sku")
+    else:
+        query = """
+            UPDATE product SET price = %s WHERE sku = %s;
+            """
+        fields = ("price", "sku")
+    return exec_query(
+        query,
+        lambda cursor: redirect(url_for("list_product")),
+        data_from_request(fields),
     )
 
 
@@ -247,8 +313,7 @@ def confirm_delete_product(product):
 
 @app.route("/product/delete", methods=["POST"])
 def delete_product():
-    return exec_query(
-        """
+    query = """
         DELETE FROM delivery WHERE tin IN (
             SELECT tin FROM supplier WHERE sku = %s
         );
@@ -264,14 +329,12 @@ def delete_product():
             SELECT order_no FROM contains
         );
         DELETE FROM product WHERE sku = %s;
-        """,
+        """
+    fields = ("sku", "sku", "sku", "sku")
+    return exec_query(
+        query,
         lambda cursor: redirect(url_for("list_product")),
-        (
-            request.form["sku"],
-            request.form["sku"],
-            request.form["sku"],
-            request.form["sku"],
-        ),
+        data_from_request(fields),
     )
 
 
@@ -321,20 +384,30 @@ def ask_supplier():
 
 @app.route("/supplier/insert", methods=["POST"])
 def insert_supplier():
-    return exec_query(
+    query = """
+        INSERT INTO supplier (tin, sku) VALUES (%s, %s);
         """
-        INSERT INTO supplier (tin, name, address, sku, date) VALUES (%s, %s, %s, %s, %s);
-        """,
+    fields = ("tin", "sku")
+    if request.form["name"]:
+        query += """
+            UPDATE supplier SET name = %s WHERE tin = %s;
+            """
+        fields += ("name", "tin")
+    if request.form["address"]:
+        query += """
+            UPDATE supplier SET address = %s WHERE tin = %s;
+            """
+        fields += ("address", "tin")
+    if request.form["date"]:
+        query += """
+            UPDATE supplier SET date = %s WHERE tin = %s;
+            """
+        fields += ("date", "tin")
+    return exec_query(
+        query,
         lambda cursor: redirect(url_for("list_supplier")),
-        (
-            request.form["tin"],
-            request.form["name"],
-            request.form["address"],
-            request.form["sku"],
-            request.form["date"],
-        ),
+        data_from_request(fields),
     )
-
 
 @app.route("/supplier")
 def list_supplier():
@@ -377,16 +450,15 @@ def confirm_delete_supplier(supplier):
 
 @app.route("/supplier/delete", methods=["POST"])
 def delete_supplier():
-    return exec_query(
-        """
+    query = """
         DELETE FROM delivery WHERE tin = %s;
         DELETE FROM supplier WHERE tin = %s;
-        """,
+        """
+    fields = ("tin", "tin")
+    return exec_query(
+        query,
         lambda cursor: redirect(url_for("list_supplier")),
-        (
-            request.form["tin"],
-            request.form["tin"],
-        ),
+        data_from_request(fields),
     )
 
 
