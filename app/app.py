@@ -64,17 +64,17 @@ def ask_customer():
             title="Insert Customer",
             fields=(
                 {
-                    "label": "New Customer Number:",
+                    "label": "New Customer Number:*",
                     "name": "cust_no",
                     "required": True,
                 },
                 {
-                    "label": "New Customer Name:",
+                    "label": "New Customer Name:*",
                     "name": "name",
                     "required": True,
                 },
                 {
-                    "label": "New Customer Email:",
+                    "label": "New Customer Email:*",
                     "name": "email",
                     "required": True,
                 },
@@ -99,7 +99,9 @@ def insert_customer():
     try:
         if not request.form["cust_no"]:
             raise Exception("Customer Number is required.")
-        if not request.form["cust_no"].isdigit():
+        try:
+            int(request.form["cust_no"])
+        except Exception as e:
             raise Exception("Customer Number must be integer.")
         if not request.form["name"]:
             raise Exception("Name is required.")
@@ -162,6 +164,13 @@ def list_customer():
                     {
                         "className": "remove",
                         "link": lambda record: url_for(
+                            "list_customer_pending", cust=record[0]
+                        ),
+                        "name": "Orders",
+                    },
+                    {
+                        "className": "remove",
+                        "link": lambda record: url_for(
                             "confirm_delete_customer", customer=record[0]
                         ),
                         "name": "Remove",
@@ -216,6 +225,57 @@ def delete_customer():
         return redirect(url_for("list_customer"))
     except Exception as e:
         return render_template("error_page.html", error=e)
+    
+
+@app.route("/customer/<string:cust>/orders")
+def list_customer_pending(cust):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=namedtuple_row) as cur:
+                cur.execute(
+                    """
+                    SELECT order_no, date FROM orders
+                    WHERE cust_no=%(cust_no)s AND order_no NOT IN(
+                        SELECT order_no FROM pay WHERE cust_no=%(cust_no)s
+                    )
+                    ORDER BY date;
+                    """,
+                    {"cust_no": cust},
+                )
+                cursor = cur.fetchall()
+            cur.close()
+        conn.close
+
+        colnames = ("order_no", "date")
+        return render_template(
+                "query.html",
+                cursor=cursor,
+                colnames=colnames,
+                title=f"Orders to pay from Customer '{cust}'",
+                row_actions=(
+                    {
+                        "className": "remove",
+                        "link": lambda record: url_for(
+                            "confirm_pay", orders=record[0], customer=cust
+                        ),
+                        "name": "Pay",
+                    },
+                ),
+            )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
+    
+@app.route("/customer/<string:customer>/<string:orders>/pay", methods=["GET"])
+def confirm_pay(orders, customer):
+    try:
+        return render_template(
+            "confirm_delete.html",
+            action_url=url_for("pay"),
+            title=f"Pay '{orders}'?",
+            data={"order_no": orders, "cust_no": customer},
+        )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
 
 
 
@@ -229,12 +289,12 @@ def ask_product():
             title="Insert Product",
             fields=(
                 {
-                    "label": "New Product SKU:",
+                    "label": "New Product SKU:*",
                     "name": "sku",
                     "required": True,
                 },
                 {
-                    "label": "New Product Name:",
+                    "label": "New Product Name:*",
                     "name": "name",
                     "required": True,
                 },
@@ -244,7 +304,7 @@ def ask_product():
                     "required": False,
                 },
                 {
-                    "label": "New Product Price:",
+                    "label": "New Product Price:*",
                     "name": "price",
                     "required": True,
                 },
@@ -262,6 +322,20 @@ def ask_product():
 @app.route("/product/insert", methods=["POST"])
 def insert_product():
     try:
+        if not request.form["sku"]:
+            raise Exception("SKU is required.")
+        if not request.form["name"]:
+            raise Exception("Name is required.")
+        if not request.form["price"]:
+            raise Exception("Price is required.")
+        try:
+            float(request.form["price"])
+        except Exception as e:
+            raise Exception("Price must be numeric.")
+        if request.form["ean"]:
+            if not request.form["ean"].isdigit() or len(request.form["ean"]) > 13:
+                raise Exception("EAN must be numeric and less than 13 digits.")
+        
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 queries = """
@@ -358,7 +432,7 @@ def ask_change_product(product):
                     "required": False,
                 },
                 {
-                    "label": "New Product Price:",
+                    "label": "New Product Price:*",
                     "name": "price",
                     "required": True,
                 },
@@ -371,6 +445,13 @@ def ask_change_product(product):
 @app.route("/product/change", methods=["POST"])
 def change_product():
     try:
+        if not request.form["price"]:
+            raise Exception("Price is required.")
+        try:
+            float(request.form["price"])
+        except Exception as e:
+            raise Exception("Price must be numeric.")
+
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 queries = """
@@ -385,7 +466,8 @@ def change_product():
                         cur.execute(
                             query + ';',
                             {"price": request.form["price"],
-                            "description": request.form["description"]},
+                            "description": request.form["description"],
+                            "sku": request.form["sku"],},
                         )
                 conn.commit()
             cur.close()
@@ -467,7 +549,7 @@ def ask_supplier():
                 title="Insert Supplier",
                 fields=(
                     {
-                        "label": "New Supplier TIN:",
+                        "label": "New Supplier TIN:*",
                         "name": "tin",
                         "required": True,
                     },
@@ -482,7 +564,7 @@ def ask_supplier():
                         "required": False,
                     },
                     {
-                        "label": "Product SKU:",
+                        "label": "Product SKU:*",
                         "name": "sku",
                         "type": "select",
                         "required": True,
@@ -502,6 +584,11 @@ def ask_supplier():
 @app.route("/supplier/insert", methods=["POST"])
 def insert_supplier():
     try:
+        if not request.form["tin"]:
+            raise Exception("TIN is required.")
+        if not request.form["sku"]:
+            raise Exception("SKU is required.")
+
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 queries = """
@@ -615,14 +702,141 @@ def delete_supplier():
 
 @app.route("/orders/insert", methods=["GET"])
 def ask_orders():
-    #TODO
-    return render_template("error_page.html", error="#TODO")
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=namedtuple_row) as cur:
+                cur.execute(
+                    """
+                    SELECT sku, name, price FROM product ORDER BY name, sku;
+                    """,
+                    {},
+                )
+                cursor = cur.fetchall()
+                cur.execute(
+                    """
+                    SELECT cust_no FROM customer ORDER BY cust_no;
+                    """,
+                    {},
+                )
+                cursor2 = cur.fetchall()
+            cur.close()
+        conn.close
+
+        fields=(
+            {
+                "label": "New Order Number:*",
+                "name": "order_no",
+                "required": True,
+            },
+            {
+                "label": "New Customer Number:*",
+                "name": "cust_no",
+                "required": True,
+                "type": "select",
+                "options": ((record[0], record[0]) for record in cursor2),
+            },
+            {
+                "label": "New Date:*",
+                "name": "date",
+                "required": True,
+            },
+        )
+        for record in cursor:
+            fields += (
+                {
+                    "label": "",
+                    "name": "sku",
+                    "type": "hidden",
+                    "value": record[0],
+                },
+                {
+                    "label": f"{record[1]}, {record[2]}€",
+                    "name": f"{record[0]}",
+                    "required": False,
+                },
+            )
+
+        return render_template(
+                "ask_input.html",
+                action_url=url_for("insert_orders"),
+                title="Insert Orders",
+                fields=fields,
+            )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
 
 
-@app.route("/orders/insert", methods=["POST"])
+@app.route("/orders/insert",  methods=["GET", "POST"])
 def insert_orders():
-    #TODO
-    return render_template("error_page.html", error="#TODO")
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=namedtuple_row) as cur:
+                cur.execute(
+                    """
+                    SELECT sku FROM (
+                        SELECT sku, name FROM product ORDER BY name, sku
+                    ) as k;
+                    """,
+                    {},
+                )
+                skus = cur.fetchall()
+
+        if request.method == "POST":
+
+            if not request.form["order_no"]:
+                raise Exception("Order Number is required.")
+            try:
+                int(request.form["order_no"])
+            except Exception as e:
+                raise Exception("Order Number must be integer.")
+            if not request.form["cust_no"]:
+                raise Exception("Customer Number is required.")
+            try:
+                int(request.form["cust_no"])
+            except Exception as e:
+                raise Exception("Customer Number must be integer.")
+            if not request.form["date"]:
+                raise Exception("Date is required.")
+            
+            aux = False
+            for sku in skus:
+                qty = request.form[sku[0]]
+                if qty:
+                    try:
+                        int(qty)
+                    except Exception as e:
+                        raise Exception("Quantity must be integer.%s",sku[0])
+                    if int(qty) > 0:
+                        aux = True
+            if not aux:
+                raise Exception("Order must include a product.")
+
+
+            with pool.connection() as conn:
+                with conn.cursor(row_factory=namedtuple_row) as cur:
+                    for sku in skus:
+                        qty = request.form[sku[0]]
+                        if qty:
+                            cur.execute(
+                                """
+                                INSERT INTO contains (order_no, sku, qty) VALUES (%(order_no)s, %(sku)s, %(qty)s);
+                                """,
+                                {"order_no": request.form["order_no"], "sku": sku[0], "qty": qty},
+                            )
+                    cur.execute(
+                            """
+                            INSERT INTO orders (order_no, cust_no, date) VALUES (%(order_no)s, %(cust_no)s, %(date)s);
+                            """,
+                            {"order_no": request.form["order_no"],
+                            "cust_no": request.form["cust_no"],
+                            "date": request.form["date"]},
+                        )
+                    conn.commit()
+                cur.close()
+            conn.close
+            return redirect(url_for("list_orders"))
+    except Exception as e:
+        return render_template("error_page.html", error=e)
 
 
 @app.route("/orders")
@@ -646,15 +860,6 @@ def list_orders():
                 cursor=cursor,
                 colnames=colnames,
                 title="Orders",
-                row_actions=(
-                    {
-                        "className": "remove",
-                        "link": lambda record: url_for(
-                            "confirm_pay", orders=record[0]
-                        ),
-                        "name": "Pay",
-                    },
-                ),
                 page_actions=(
                     {"title": "Insert orders", "link": url_for("ask_orders")},
                 ),
@@ -665,10 +870,26 @@ def list_orders():
 
 
 
-@app.route("/orders/pay")
-def confirm_pay():
-    #TODO
-    return render_template("error_page.html", error="#TODO")
+
+
+@app.route("/customer/pay", methods=["POST"])
+def pay():
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=namedtuple_row) as cur:
+                cur.execute(
+                    """
+                    INSERT INTO pay (order_no, cust_no) VALUES (%(order_no)s, %(cust_no)s);
+                    """,
+                    {"order_no": request.form["order_no"],
+                    "cust_no": request.form["cust_no"]},
+                )
+                conn.commit()
+            cur.close()
+        conn.close
+        return redirect(url_for("list_customer"))
+    except Exception as e:
+        return render_template("error_page.html", error=e)
 
 
 @app.route("/pay")
@@ -692,6 +913,31 @@ def list_pay():
                 cursor=cursor,
                 colnames=colnames,
                 title="Pay",
+            )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
+    
+@app.route("/contains")
+def list_contains():
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=namedtuple_row) as cur:
+                cur.execute(
+                    """
+                    SELECT * FROM contains ORDER BY order_no
+                    """,
+                    {},
+                )
+                cursor = cur.fetchall()
+            cur.close()
+        conn.close
+
+        colnames = ("order_no", "cust_no","quantity")
+        return render_template(
+                "query.html",
+                cursor=cursor,
+                colnames=colnames,
+                title="Contains",
             )
     except Exception as e:
         return render_template("error_page.html", error=e)

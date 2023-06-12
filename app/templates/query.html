@@ -67,6 +67,19 @@
       </table>
     </div>
   {% else %}
-    <p>Erro: ao obter dados da base de dados!</p>
+    <div class="table-container">
+      <table border="2px">
+        <thead>
+          <tr>
+            <tr>
+              {% for record in colnames %}<th>{{ record|replace("_"," ")|e }}</th>{% endfor %}
+              {% for action in (row_actions if row_actions else []) %}
+                <th></th>
+              {% endfor %}
+            </tr>
+          </tr>
+        </thead>
+      </table>
+    </div>
   {% endif %}
 {% endblock %}
