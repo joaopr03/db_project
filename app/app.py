@@ -62,6 +62,9 @@ def ask_customer():
             "ask_input.html",
             action_url=url_for("insert_customer"),
             title="Insert Customer",
+            submit="Create Customer",
+            back_action_title="Back to Customer",
+            back_action=url_for("list_customer"),
             fields=(
                 {
                     "label": "New Customer Number:*",
@@ -166,7 +169,7 @@ def list_customer():
                         "link": lambda record: url_for(
                             "list_customer_pending", cust=record[0]
                         ),
-                        "name": "Orders",
+                        "name": "Orders to Pay",
                     },
                     {
                         "className": "remove",
@@ -252,6 +255,8 @@ def list_customer_pending(cust):
                 cursor=cursor,
                 colnames=colnames,
                 title=f"Orders to pay from Customer '{cust}'",
+                back_action=url_for("list_customer"),
+                back_action_title="Back to Customer",
                 row_actions=(
                     {
                         "className": "remove",
@@ -287,6 +292,9 @@ def ask_product():
             "ask_input.html",
             action_url=url_for("insert_product"),
             title="Insert Product",
+            submit="Create Product",
+            back_action_title="Back to Product",
+            back_action=url_for("list_product"),
             fields=(
                 {
                     "label": "New Product SKU:*",
@@ -419,6 +427,9 @@ def ask_change_product(product):
             "ask_input.html",
             action_url=url_for("change_product"),
             title=f"Change Product '{product}'?",
+            submit="Change Product",
+            back_action_title="Back to Product",
+            back_action=url_for("list_product"),
             fields=(
                 {
                     "label": "",
@@ -547,6 +558,9 @@ def ask_supplier():
                 "ask_input.html",
                 action_url=url_for("insert_supplier"),
                 title="Insert Supplier",
+                submit="Create Supplier",
+                back_action_title="Back to Supplier",
+                back_action=url_for("list_supplier"),
                 fields=(
                     {
                         "label": "New Supplier TIN:*",
@@ -761,6 +775,9 @@ def ask_orders():
                 action_url=url_for("insert_orders"),
                 title="Insert Orders",
                 fields=fields,
+                submit="Place Order",
+                back_action_title="Back to Orders",
+                back_action=url_for("list_orders"),
             )
     except Exception as e:
         return render_template("error_page.html", error=e)
@@ -860,14 +877,50 @@ def list_orders():
                 cursor=cursor,
                 colnames=colnames,
                 title="Orders",
+                row_actions=(
+                    {
+                        "className": "remove",
+                        "link": lambda record: url_for(
+                            "list_order_products", orders=record[0]
+                        ),
+                        "name": "Details",
+                    },
+                ),
                 page_actions=(
                     {"title": "Insert orders", "link": url_for("ask_orders")},
                 ),
             )
     except Exception as e:
         return render_template("error_page.html", error=e)
+    
+@app.route("/orders/<string:orders>/contains")
+def list_order_products(orders):
+    try:
+        with pool.connection() as conn:
+            with conn.cursor(row_factory=namedtuple_row) as cur:
+                cur.execute(
+                    """
+                    SELECT sku, name, qty, price
+                    FROM contains INNER JOIN product USING(sku)
+                    WHERE order_no=%(cust_no)s ORDER BY name;
+                    """,
+                    {"cust_no": orders},
+                )
+                cursor = cur.fetchall()
+            cur.close()
+        conn.close
 
-
+        colnames = ("sku", "name", "quantity", "price")
+        return render_template(
+                "query.html",
+                cursor=cursor,
+                colnames=colnames,
+                title=f"Order '{orders}'",
+                back_action_title="Back to Orders",
+                back_action=url_for("list_orders"),
+            )
+    except Exception as e:
+        return render_template("error_page.html", error=e)
 
 
 
