@@ -57,14 +57,6 @@ a.button:focus {
   outline: none;
 }
 
-.button.danger {
-  border: 2px solid #df2727;
-}
-
-.button.danger:hover {
-  background-color: #df2727;
-}
-
 a.list {
   color: white !important;
 }
@@ -252,15 +244,6 @@ form {
   box-sizing: border-box;
 }
 
-.chip {
-  padding: 0.2em 0.5em;
-  border-radius: 0.8em;
-  font-weight: bold;
-}
-
-.navbar-spacing {
-  height: 50px;
-}
 
 .navbar {
   background: #0d0e0e;
@@ -287,39 +270,24 @@ form {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
-.flex-grow {
-  flex-grow: 1;
-}
+.navbar-ask {
+  height: 50px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
 
-.tab-nav {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: stretch;
+  align-items: center;
+
+  padding: 0 1em;
 }
 
-.tab-btn {
-  border-bottom: 1px solid #3a3a3a;
-  transition: color 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
-  display: inline-block;
-  font-weight: bold;
+.navbar-ask a {
+  padding: 0.5em;
+  border-radius: 0.5em;
 
-  padding: 0.8em 2em;
-  margin: 0;
-  margin-bottom: 1px;
-  flex-grow: 1;
-  text-align: center;
-}
-
-.tab-btn:hover {
-  border-bottom: 2px solid #4caf50;
-  color: #4caf50;
-  margin-bottom: 0px;
-}
-
-.tab-btn.active {
-  border-bottom: 2px solid #4caf4fb5;
-  color: #4caf4fb5;
-  margin-bottom: 0px;
+  transition: background-color 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 
 .text-center {

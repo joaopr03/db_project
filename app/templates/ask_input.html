@@ -1,8 +1,8 @@
 {% extends 'partial/base.html' %}
 {% block title %}<title>{{ title }}</title>{% endblock %}
 {% block content %}
-  <nav class="navbar">
-    <a href="{{ back_action }}">{{ back_action_title }}</a>
+  <nav class="navbar-ask">
+    <a class="button" href="{{ back_action }}">{{ back_action_title }}</a>
   </nav>
   <h1>{{ title }}</h1>
   <form action="{{ action_url|default('') }}" method="post">

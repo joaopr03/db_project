@@ -18,19 +18,13 @@
     {% else %}
       <a href="{{ url_for('homepage') }}">Main Menu</a>
     {% endif %}
-    <div class="flex-grow"></div>
-    {% for action in (page_actions|default([])) %}
-      <a href="{{ action.link }}">{{ action.title }}</a>
-    {% endfor %}
   </nav>
-  <div class="navbar-spacing"></div>
-  <div class="tab-nav">
-    {% for action in (page_top_actions|default([])) %}
-      <a class="tab-btn {% if action.active %}active{% endif %}"
-         href="{{ action.link }}">{{ action.title }}</a>
+  <h1>
+    {{ title }}
+    {% for action in (page_actions|default([])) %}
+      <a class="button" href="{{ action.link }}">{{ action.title }}</a>
     {% endfor %}
-  </div>
-  <h1>{{ title }}</h1>
+  </h1>
   {% if query %}<pre><code>{{ query|e }}</code></pre>{% endif %}
   <div class="table-container">
     <table border="1px">

@@ -105,9 +105,7 @@ def insert_customer():
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 cur.execute(
                     """
-                    SELECT cust_no,email FROM (
-                        SELECT cust_no, email FROM customer ORDER BY cust_no
-                    ) as k;
+                    SELECT cust_no,email FROM customer ORDER BY cust_no;
                     """,
                     {},
                 )
@@ -117,34 +115,32 @@ def insert_customer():
 
             if not request.form["cust_no"]:
                 raise Exception("Customer Number is required.")
+            if not request.form["name"]:
+                raise Exception("Name is required.")
+            if not request.form["email"]:
+                raise Exception("Email is required.")
             try:
                 int(request.form["cust_no"])
             except Exception as e:
                 raise Exception("Customer Number must be integer.")
-            if not request.form["name"]:
-                raise Exception("Name is required.")
             if len(request.form["name"]) > 80:
                 raise Exception("Name must have a maximun of 80 characters.")
-            if not request.form["email"]:
-                raise Exception("Email is required.")
             if len(request.form["email"]) > 254:
                 raise Exception("Email must have a maximun of 254 characters.")
-            if request.form["phone"]:
-                try:
-                    phone_number = request.form["phone"][1:-1]
-                    int(phone_number)
-                except Exception as e:
+            phone = request.form["phone"]
+            if phone:
+                if (phone[0] != "+" and not phone[0].isdigit()) or not phone[1:].isdigit():
                     raise Exception("Invalid phone number.")
-            if len(request.form["phone"]) > 15:
-                raise Exception("Phone number must have a maximun of 14 digits.")
+                if len(phone) > 15:
+                    raise Exception("Phone must have a maximun of 14 digits.")
             if len(request.form["address"]) > 255:
                 raise Exception("Address must have a maximun of 255 characters.")
             
             for unique in unique_attributes:
                 if (unique[0] == int(request.form["cust_no"])):
-                    raise Exception("Customer number already exists")
+                    raise Exception("Customer number already exists.")
                 if (unique[1] == request.form["email"]):
-                    raise Exception("Email already exists")
+                    raise Exception("Email already exists.")
             
             with pool.connection() as conn:
                 with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -362,6 +358,24 @@ def ask_product():
         return render_template("error_page.html", error=e)
 
 
+def check_price(price):
+    try:
+        float(price)
+    except Exception as e:
+        raise Exception("Price must be numeric.")
+    if len(price) > 11:
+        raise Exception("Price must have a maximun of 10 digits.")
+    start_count = False
+    count = 0
+    for character in price:
+        if start_count:
+            count += 1
+        if character == '.':
+            start_count = True
+        if count > 2:
+            raise Exception("Price must have a maximun of 2 decimal digits.")
+    
+
 @app.route("/product/insert", methods=["GET", "POST"])
 def insert_product():
     try:
@@ -369,9 +383,7 @@ def insert_product():
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 cur.execute(
                     """
-                    SELECT sku,ean FROM (
-                        SELECT sku, ean FROM product ORDER BY sku
-                    ) as k;
+                    SELECT sku,ean FROM product ORDER BY sku;
                     """,
                     {},
                 )
@@ -381,38 +393,25 @@ def insert_product():
 
             if not request.form["sku"]:
                 raise Exception("SKU is required.")
-            if len(request.form["sku"]) > 25:
-                raise Exception("Sku must have a maximun of 25 characters.")
             if not request.form["name"]:
                 raise Exception("Name is required.")
-            if len(request.form["name"]) > 200:
-                raise Exception("Name must have a maximun of 200 characters.")
             if not request.form["price"]:
                 raise Exception("Price is required.")
-            try:
-                float(request.form["price"])
-            except Exception as e:
-                raise Exception("Price must be numeric.")
-            if len(request.form["price"]) > 11:
-                raise Exception("Price must have a maximun of 10 digits.")
-            start_count = False
-            count = 0
-            for character in request.form["price"]:
-                if start_count:
-                    count += 1
-                if character == '.':
-                    start_count = True
-                if count > 2:
-                    raise Exception("Price must have a maximun of 2 decimal digits.")
+            if len(request.form["sku"]) > 25:
+                raise Exception("SKU must have a maximun of 25 characters.")
+            if len(request.form["name"]) > 200:
+                raise Exception("Name must have a maximun of 200 characters.")
+            check_price(request.form["price"])
             if request.form["ean"]:
                 if not request.form["ean"].isdigit() or len(request.form["ean"]) > 13:
                     raise Exception("EAN must be numeric and less than 13 digits.")
-                
+
             for unique in unique_attributes:
                 if (unique[0] == request.form["sku"]):
                     raise Exception("SKU already exists")
-                if (int(unique[1]) == int(request.form["ean"])):
-                    raise Exception("Ean already exists")
+                if request.form["ean"]:
+                    if (unique[1] == int(request.form["ean"])):
+                        raise Exception("EAN already exists")
             
             with pool.connection() as conn:
                 with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -528,10 +527,7 @@ def change_product():
     try:
         if not request.form["price"]:
             raise Exception("Price is required.")
-        try:
-            float(request.form["price"])
-        except Exception as e:
-            raise Exception("Price must be numeric.")
+        check_price(request.form["price"])
 
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -672,9 +668,7 @@ def insert_supplier():
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 cur.execute(
                     """
-                    SELECT tin FROM (
-                        SELECT tin FROM supplier ORDER BY tin
-                    ) as k;
+                    SELECT tin FROM supplier ORDER BY tin;
                     """,
                     {},
                 )
@@ -683,20 +677,19 @@ def insert_supplier():
         if request.method == "POST":
             if not request.form["tin"]:
                 raise Exception("TIN is required.")
+            if not request.form["sku"]:
+                raise Exception("SKU is required.")
             if len(request.form["tin"]) > 20:
                 raise Exception("TIN must have a maximun of 20 characters.")
             if len(request.form["name"]) > 200:
                 raise Exception("Name must have a maximun of 200 characters.")
             if len(request.form["address"]) > 255:
                 raise Exception("Address must have a maximun of 255 characters.")
-            if not request.form["sku"]:
-                raise Exception("SKU is required.")
             if request.form["date"]:
-                input_data = request.form["date"]
                 try:
-                    datetime.strptime(input_data, "%Y-%m-%d")
+                    datetime.strptime(request.form["date"], "%Y-%m-%d")
                 except Exception as e:
-                    raise Exception("Invalid Date.")
+                    raise Exception("\tInvalid Date.\nDate format must be YYYY-MM-DD")
             
             for unique in unique_attributes:
                 if (unique[0] == request.form["tin"]):
@@ -889,18 +882,14 @@ def insert_orders():
             with conn.cursor(row_factory=namedtuple_row) as cur:
                 cur.execute(
                     """
-                    SELECT sku FROM (
-                        SELECT sku, name FROM product ORDER BY name, sku
-                    ) as k;
+                    SELECT sku FROM product ORDER BY sku;
                     """,
                     {},
                 )
                 skus = cur.fetchall()
                 cur.execute(
                     """
-                    SELECT order_no FROM (
-                        SELECT order_no FROM orders ORDER BY order_no
-                    ) as k;
+                    SELECT order_no FROM orders ORDER BY order_no;
                     """,
                     {},
                 )
@@ -910,24 +899,23 @@ def insert_orders():
 
             if not request.form["order_no"]:
                 raise Exception("Order Number is required.")
+            if not request.form["cust_no"]:
+                raise Exception("Customer Number is required.")
+            if not request.form["date"]:
+                raise Exception("Date is required.")
             try:
                 int(request.form["order_no"])
             except Exception as e:
                 raise Exception("Order Number must be integer.")
-            if not request.form["cust_no"]:
-                raise Exception("Customer Number is required.")
             try:
                 int(request.form["cust_no"])
             except Exception as e:
                 raise Exception("Customer Number must be integer.")
-            if not request.form["date"]:
-                raise Exception("Date is required.")
-            if request.form["date"]:
-                input_data = request.form["date"]
-                try:
-                    datetime.strptime(input_data, "%Y-%m-%d")
-                except Exception as e:
-                    raise Exception("Invalid Date.")
+            
+            try:
+                datetime.strptime(request.form["date"], "%Y-%m-%d")
+            except Exception as e:
+                raise Exception("\tInvalid Date.\nDate format must be YYYY-MM-DD")
                 
             for unique in unique_attributes:
                 if (unique[0] == int(request.form["order_no"])):
