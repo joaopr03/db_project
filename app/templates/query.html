@@ -14,9 +14,9 @@
 {% block content %}
   <nav class="navbar">
     {% if back_action %}
-      <a href="{{ back_action }}">{{ back_action_title }}</a>
+      <a class="button" href="{{ back_action }}">{{ back_action_title }}</a>
     {% else %}
-      <a href="{{ url_for('homepage') }}">Main Menu</a>
+      <a class="button" href="{{ url_for('homepage') }}">Main Menu</a>
     {% endif %}
   </nav>
   <h1>

@@ -1,8 +1,8 @@
 body {
-  background-color: #181a1b;
-  color: white;
+  background-color: #fff6d8;
+  color: rgb(28, 30, 31);
   padding: 20px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Arial";
 
   display: flex;
   justify-content: center;
@@ -38,8 +38,8 @@ footer:hover {
 }
 
 a.button {
-  background-color: black;
-  border: 2px solid #4caf50;
+  background-color: #1f254e;
+  border: 2px solid #000422;
   color: white;
   padding: 15px 32px;
   text-align: center;
@@ -48,12 +48,12 @@ a.button {
   font-size: 16px;
   margin: 25px;
   transition-duration: 0.3s;
-  border-radius: 12px;
+  border-radius: 15px;
 }
 
 a.button:hover,
 a.button:focus {
-  background-color: #4caf50; /* Green */
+  background-color: #4382cb; 
   outline: none;
 }
 
@@ -107,7 +107,8 @@ table {
 
 th {
   padding: 20px;
-  background-color: cadetblue;
+  background-color: #1f254e;
+  color: white;
   text-transform: capitalize;
 }
 
@@ -116,11 +117,11 @@ tr {
 }
 
 tr:nth-child(even) {
-  background-color: #3a3a3a;
+  background-color: #bcbcbc;
 }
 
 tr:hover {
-  background-color: orangered;
+  background-color: rgb(135, 208, 248);
 }
 td {
   padding: 12px;
@@ -128,12 +129,12 @@ td {
 
 td.remove {
   text-align: center;
-  background-color: red;
+  background-color: rgb(174, 6, 6);
   transition-duration: 0.3s;
 }
 
 td.remove:hover {
-  background-color: #790000;
+  background-color: #4b0303;
 }
 
 td.list {
@@ -147,19 +148,19 @@ td.list:hover {
 }
 
 input {
-  border: 2px solid #4caf50;
+  border: 2px solid #000422;
   border-radius: 8px;
   padding: 4px;
 }
 
 input[type="text"],
 select {
-  background-color: #0d0e0e;
-  color: #fff;
+  background-color: #1f254e;
+  color: white;
   border-radius: 1em 1em 0 0;
 
   border: 2px solid transparent;
-  border-bottom-color: #4caf50;
+  border-bottom-color: #000422;
   outline: none;
 
   padding: 0.5em 0.8em;
@@ -167,14 +168,14 @@ select {
 
 input[type="text"]:focus,
 select:focus {
-  border-color: #4caf50;
+  border-color: #000422;
   outline: none;
 }
 
 button.button,
 input[type="submit"] {
-  background-color: black;
-  border: 2px solid #4caf50;
+  background-color:  #1f254e;
+  border: 2px solid #000422;
   color: white;
   padding: 10px 16px;
   text-align: center;
@@ -192,28 +193,7 @@ button.button:hover,
 input[type="submit"]:hover,
 button.button:focus,
 input[type="submit"]:focus {
-  background-color: #4caf50; /* Green */
-  outline: none;
-}
-
-textarea.query {
-  width: 100%;
-  border: 2px solid transparent;
-  border-bottom-color: #4caf50;
-  margin-top: 10px;
-  box-sizing: border-box;
-
-  background-color: #0d0e0e;
-  color: #fff;
-  border-radius: 1em 1em 0 0;
-
-  font-family: monospace;
-  font-size: 1.3em;
-  padding: 1em;
-}
-
-textarea.query:focus {
-  border-color: #4caf50;
+  background-color: #4382cb; 
   outline: none;
 }
 
@@ -246,7 +226,6 @@ form {
 
 
 .navbar {
-  background: #0d0e0e;
   height: 50px;
   position: fixed;
   top: 0;
@@ -267,7 +246,7 @@ form {
 }
 
 .navbar a:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: #4382cb;
 }
 
 .navbar-ask {

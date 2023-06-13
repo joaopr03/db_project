@@ -467,7 +467,7 @@ def list_product():
                 title="Product",
                 row_actions=(
                     {
-                        "className": "change",
+                        "className": "remove",
                         "link": lambda record: url_for(
                             "ask_change_product", product=record[0]
                         ),
