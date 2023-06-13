@@ -50,7 +50,15 @@
           <tr>
             {% for value in record %}
               <td>
+                {%if title == 'Product' %}
+                  {% if loop.index0 == colnames.index('price') %}
+                    {{ value|e if value is not none else '' }}€
+                  {% else %}
+                  {{ value|e if value is not none else '' }}
+                  {% endif %}
+                {%else %}
                 {{ value|e if value is not none else '' }}
+                {% endif %}
               </td>
             {% endfor %}
             {% for action in (row_actions|default([])) %}

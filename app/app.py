@@ -12,6 +12,7 @@ from flask import request
 from flask import url_for
 from psycopg.rows import namedtuple_row
 from psycopg_pool import ConnectionPool
+from datetime import datetime
 
 
 # postgres://{user}:{password}@{hostname}:{port}/{database-name}
@@ -97,47 +98,81 @@ def ask_customer():
         return render_template("error_page.html", error=e)
 
 
-@app.route("/customer/insert", methods=["POST"])
+@app.route("/customer/insert", methods=["GET", "POST"])
 def insert_customer():
     try:
-        if not request.form["cust_no"]:
-            raise Exception("Customer Number is required.")
-        try:
-            int(request.form["cust_no"])
-        except Exception as e:
-            raise Exception("Customer Number must be integer.")
-        if not request.form["name"]:
-            raise Exception("Name is required.")
-        if not request.form["email"]:
-            raise Exception("Email is required.")
-        
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
-                queries = """
-                    INSERT INTO customer (cust_no, name, email) VALUES (%(cust_no)s, %(name)s, %(email)s);
+                cur.execute(
                     """
-                if request.form["phone"]:
-                    queries += """
-                        UPDATE customer SET phone = %(phone)s WHERE cust_no = %(cust_no)s;
+                    SELECT cust_no,email FROM (
+                        SELECT cust_no, email FROM customer ORDER BY cust_no
+                    ) as k;
+                    """,
+                    {},
+                )
+                unique_attributes = cur.fetchall()
+
+        if request.method == "POST":
+
+            if not request.form["cust_no"]:
+                raise Exception("Customer Number is required.")
+            try:
+                int(request.form["cust_no"])
+            except Exception as e:
+                raise Exception("Customer Number must be integer.")
+            if not request.form["name"]:
+                raise Exception("Name is required.")
+            if len(request.form["name"]) > 80:
+                raise Exception("Name must have a maximun of 80 characters.")
+            if not request.form["email"]:
+                raise Exception("Email is required.")
+            if len(request.form["email"]) > 254:
+                raise Exception("Email must have a maximun of 254 characters.")
+            if request.form["phone"]:
+                try:
+                    phone_number = request.form["phone"][1:-1]
+                    int(phone_number)
+                except Exception as e:
+                    raise Exception("Invalid phone number.")
+            if len(request.form["phone"]) > 15:
+                raise Exception("Phone number must have a maximun of 14 digits.")
+            if len(request.form["address"]) > 255:
+                raise Exception("Address must have a maximun of 255 characters.")
+            
+            for unique in unique_attributes:
+                if (unique[0] == int(request.form["cust_no"])):
+                    raise Exception("Customer number already exists")
+                if (unique[1] == request.form["email"]):
+                    raise Exception("Email already exists")
+            
+            with pool.connection() as conn:
+                with conn.cursor(row_factory=namedtuple_row) as cur:
+                    queries = """
+                        INSERT INTO customer (cust_no, name, email) VALUES (%(cust_no)s, %(name)s, %(email)s);
                         """
-                if request.form["address"]:
-                    queries += """
-                        UPDATE customer SET address = %(address)s WHERE cust_no = %(cust_no)s;
-                        """
-                for query in queries.split(';'):
-                    if len(query) > 0:
-                        cur.execute(
-                            query + ';',
-                            {"cust_no": request.form["cust_no"],
-                            "name": request.form["name"],
-                            "email": request.form["email"],
-                            "phone": request.form["phone"],
-                            "address": request.form["address"]},
-                        )
-                conn.commit()
-            cur.close()
-        conn.close
-        return redirect(url_for("list_customer"))
+                    if request.form["phone"]:
+                        queries += """
+                            UPDATE customer SET phone = %(phone)s WHERE cust_no = %(cust_no)s;
+                            """
+                    if request.form["address"]:
+                        queries += """
+                            UPDATE customer SET address = %(address)s WHERE cust_no = %(cust_no)s;
+                            """
+                    for query in queries.split(';'):
+                        if len(query) > 0:
+                            cur.execute(
+                                query + ';',
+                                {"cust_no": request.form["cust_no"],
+                                "name": request.form["name"],
+                                "email": request.form["email"],
+                                "phone": request.form["phone"],
+                                "address": request.form["address"]},
+                            )
+                    conn.commit()
+                cur.close()
+            conn.close
+            return redirect(url_for("list_customer"))
     except Exception as e:
         return render_template("error_page.html", error=e)
 
@@ -327,50 +362,85 @@ def ask_product():
         return render_template("error_page.html", error=e)
 
 
-@app.route("/product/insert", methods=["POST"])
+@app.route("/product/insert", methods=["GET", "POST"])
 def insert_product():
     try:
-        if not request.form["sku"]:
-            raise Exception("SKU is required.")
-        if not request.form["name"]:
-            raise Exception("Name is required.")
-        if not request.form["price"]:
-            raise Exception("Price is required.")
-        try:
-            float(request.form["price"])
-        except Exception as e:
-            raise Exception("Price must be numeric.")
-        if request.form["ean"]:
-            if not request.form["ean"].isdigit() or len(request.form["ean"]) > 13:
-                raise Exception("EAN must be numeric and less than 13 digits.")
-        
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
-                queries = """
-                    INSERT INTO product (sku, name, price) VALUES (%(sku)s, %(name)s, %(price)s);
+                cur.execute(
                     """
-                if request.form["description"]:
-                    queries += """
-                        UPDATE product SET description = %(description)s WHERE sku = %(sku)s;
+                    SELECT sku,ean FROM (
+                        SELECT sku, ean FROM product ORDER BY sku
+                    ) as k;
+                    """,
+                    {},
+                )
+                unique_attributes = cur.fetchall()
+
+        if request.method == "POST":
+
+            if not request.form["sku"]:
+                raise Exception("SKU is required.")
+            if len(request.form["sku"]) > 25:
+                raise Exception("Sku must have a maximun of 25 characters.")
+            if not request.form["name"]:
+                raise Exception("Name is required.")
+            if len(request.form["name"]) > 200:
+                raise Exception("Name must have a maximun of 200 characters.")
+            if not request.form["price"]:
+                raise Exception("Price is required.")
+            try:
+                float(request.form["price"])
+            except Exception as e:
+                raise Exception("Price must be numeric.")
+            if len(request.form["price"]) > 11:
+                raise Exception("Price must have a maximun of 10 digits.")
+            start_count = False
+            count = 0
+            for character in request.form["price"]:
+                if start_count:
+                    count += 1
+                if character == '.':
+                    start_count = True
+                if count > 2:
+                    raise Exception("Price must have a maximun of 2 decimal digits.")
+            if request.form["ean"]:
+                if not request.form["ean"].isdigit() or len(request.form["ean"]) > 13:
+                    raise Exception("EAN must be numeric and less than 13 digits.")
+                
+            for unique in unique_attributes:
+                if (unique[0] == request.form["sku"]):
+                    raise Exception("SKU already exists")
+                if (int(unique[1]) == int(request.form["ean"])):
+                    raise Exception("Ean already exists")
+            
+            with pool.connection() as conn:
+                with conn.cursor(row_factory=namedtuple_row) as cur:
+                    queries = """
+                        INSERT INTO product (sku, name, price) VALUES (%(sku)s, %(name)s, %(price)s);
                         """
-                if request.form["ean"]:
-                    queries += """
-                        UPDATE product SET ean = %(ean)s WHERE sku = %(sku)s;
-                        """
-                for query in queries.split(';'):
-                    if len(query) > 0:
-                        cur.execute(
-                            query + ';',
-                            {"sku": request.form["sku"],
-                            "name": request.form["name"],
-                            "price": request.form["price"],
-                            "description": request.form["description"],
-                            "ean": request.form["ean"]},
-                        )
-                conn.commit()
-            cur.close()
-        conn.close
-        return redirect(url_for("list_product"))
+                    if request.form["description"]:
+                        queries += """
+                            UPDATE product SET description = %(description)s WHERE sku = %(sku)s;
+                            """
+                    if request.form["ean"]:
+                        queries += """
+                            UPDATE product SET ean = %(ean)s WHERE sku = %(sku)s;
+                            """
+                    for query in queries.split(';'):
+                        if len(query) > 0:
+                            cur.execute(
+                                query + ';',
+                                {"sku": request.form["sku"],
+                                "name": request.form["name"],
+                                "price": request.form["price"],
+                                "description": request.form["description"],
+                                "ean": request.form["ean"]},
+                            )
+                    conn.commit()
+                cur.close()
+            conn.close
+            return redirect(url_for("list_product"))
     except Exception as e:
         return render_template("error_page.html", error=e)
 
@@ -595,45 +665,74 @@ def ask_supplier():
         return render_template("error_page.html", error=e)
 
 
-@app.route("/supplier/insert", methods=["POST"])
+@app.route("/supplier/insert", methods=["GET","POST"])
 def insert_supplier():
     try:
-        if not request.form["tin"]:
-            raise Exception("TIN is required.")
-        if not request.form["sku"]:
-            raise Exception("SKU is required.")
-
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
-                queries = """
-                    INSERT INTO supplier (tin, sku) VALUES (%(tin)s, %(sku)s);
+                cur.execute(
                     """
-                if request.form["name"]:
-                    queries += """
-                        UPDATE supplier SET name = %(name)s WHERE tin = %(tin)s;
+                    SELECT tin FROM (
+                        SELECT tin FROM supplier ORDER BY tin
+                    ) as k;
+                    """,
+                    {},
+                )
+                unique_attributes = cur.fetchall()
+
+        if request.method == "POST":
+            if not request.form["tin"]:
+                raise Exception("TIN is required.")
+            if len(request.form["tin"]) > 20:
+                raise Exception("TIN must have a maximun of 20 characters.")
+            if len(request.form["name"]) > 200:
+                raise Exception("Name must have a maximun of 200 characters.")
+            if len(request.form["address"]) > 255:
+                raise Exception("Address must have a maximun of 255 characters.")
+            if not request.form["sku"]:
+                raise Exception("SKU is required.")
+            if request.form["date"]:
+                input_data = request.form["date"]
+                try:
+                    datetime.strptime(input_data, "%Y-%m-%d")
+                except Exception as e:
+                    raise Exception("Invalid Date.")
+            
+            for unique in unique_attributes:
+                if (unique[0] == request.form["tin"]):
+                    raise Exception("TIN already exists")
+
+            with pool.connection() as conn:
+                with conn.cursor(row_factory=namedtuple_row) as cur:
+                    queries = """
+                        INSERT INTO supplier (tin, sku) VALUES (%(tin)s, %(sku)s);
                         """
-                if request.form["address"]:
-                    queries += """
-                        UPDATE supplier SET address = %(address)s WHERE tin = %(tin)s;
-                        """
-                if request.form["date"]:
-                    queries += """
-                        UPDATE supplier SET date = %(date)s WHERE tin = %(tin)s;
-                        """
-                for query in queries.split(';'):
-                    if len(query) > 0:
-                        cur.execute(
-                            query + ';',
-                            {"tin": request.form["tin"],
-                            "name": request.form["name"],
-                            "sku": request.form["sku"],
-                            "address": request.form["address"],
-                            "date": request.form["date"]},
-                        )
-                conn.commit()
-            cur.close()
-        conn.close
-        return redirect(url_for("list_supplier"))
+                    if request.form["name"]:
+                        queries += """
+                            UPDATE supplier SET name = %(name)s WHERE tin = %(tin)s;
+                            """
+                    if request.form["address"]:
+                        queries += """
+                            UPDATE supplier SET address = %(address)s WHERE tin = %(tin)s;
+                            """
+                    if request.form["date"]:
+                        queries += """
+                            UPDATE supplier SET date = %(date)s WHERE tin = %(tin)s;
+                            """
+                    for query in queries.split(';'):
+                        if len(query) > 0:
+                            cur.execute(
+                                query + ';',
+                                {"tin": request.form["tin"],
+                                "name": request.form["name"],
+                                "sku": request.form["sku"],
+                                "address": request.form["address"],
+                                "date": request.form["date"]},
+                            )
+                    conn.commit()
+                cur.close()
+            conn.close
+            return redirect(url_for("list_supplier"))
     except Exception as e:
         return render_template("error_page.html", error=e)
 
@@ -653,7 +752,7 @@ def list_supplier():
             cur.close()
         conn.close
 
-        colnames = ("sku", "name", "description", "price", "ean")
+        colnames = ("tin", "name", "address", "sku", "date")
         return render_template(
                 "query.html",
                 cursor=cursor,
@@ -743,7 +842,7 @@ def ask_orders():
                 "required": True,
             },
             {
-                "label": "New Customer Number:*",
+                "label": "Customer Number:*",
                 "name": "cust_no",
                 "required": True,
                 "type": "select",
@@ -797,6 +896,15 @@ def insert_orders():
                     {},
                 )
                 skus = cur.fetchall()
+                cur.execute(
+                    """
+                    SELECT order_no FROM (
+                        SELECT order_no FROM orders ORDER BY order_no
+                    ) as k;
+                    """,
+                    {},
+                )
+                unique_attributes = cur.fetchall()
 
         if request.method == "POST":
 
@@ -814,6 +922,17 @@ def insert_orders():
                 raise Exception("Customer Number must be integer.")
             if not request.form["date"]:
                 raise Exception("Date is required.")
+            if request.form["date"]:
+                input_data = request.form["date"]
+                try:
+                    datetime.strptime(input_data, "%Y-%m-%d")
+                except Exception as e:
+                    raise Exception("Invalid Date.")
+                
+            for unique in unique_attributes:
+                if (unique[0] == int(request.form["order_no"])):
+                    raise Exception("Order number already exists")
+            
             
             aux = False
             for sku in skus:
@@ -822,7 +941,7 @@ def insert_orders():
                     try:
                         int(qty)
                     except Exception as e:
-                        raise Exception("Quantity must be integer.%s",sku[0])
+                        raise Exception("Quantity must be integer.")
                     if int(qty) > 0:
                         aux = True
             if not aux:
@@ -985,7 +1104,7 @@ def list_contains():
             cur.close()
         conn.close
 
-        colnames = ("order_no", "cust_no","quantity")
+        colnames = ("order_no", "sku","quantity")
         return render_template(
                 "query.html",
                 cursor=cursor,
