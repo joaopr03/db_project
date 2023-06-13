@@ -1,0 +1,15 @@
+{% extends 'partial/base.html' %}
+{% block title %}<title>{{ title }}</title>{% endblock %}
+{% block content %}
+  <h1 class="text-center">{{ title }}</h1>
+  <form action="{{ action_url|default('') }}" method="post">
+    {% for key, value in data.items() %}
+      <input type="hidden" name="{{ key }}" value="{{ value|e }}" />
+    {% endfor %}
+    <p class="horizontal-center">
+      <button class="button" onclick="history.back(); return false;">Cancel</button>
+      <input class="button danger" type="submit" value="Confirm" />
+    </p>
+  </form>
+  <a class="button" href="{{ url_for('homepage') }}">Main Menu</a>
+{% endblock %}
