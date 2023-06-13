@@ -14,6 +14,9 @@
     <img src="{{ url_for('static', filename='img/favicon.png') }}" width="150" height="150">
     <h1>Something went wrong</h1>
     <pre><code>{{ error }}</code></pre>
+    <p class="horizontal-center">
+      <button class="button" onclick="history.back(); return false;">Try Again</button>
+    </p>
     <a class="button" href="{{ url_for('homepage') }}">Main Menu</a>
   </div>
 {% endblock %}
