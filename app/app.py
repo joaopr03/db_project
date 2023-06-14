@@ -51,7 +51,7 @@ def homepage():
     try:
         return render_template("index.html")
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 
@@ -95,11 +95,24 @@ def ask_customer():
             ),
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/customer/insert", methods=["GET", "POST"])
 def insert_customer():
+    error = (
+            "Customer Number is required.",
+            "Name is required.",
+            "Email is required.",
+            "Customer Number must be integer.",
+            "Name must have a maximun of 80 characters.",
+            "Email must have a maximun of 254 characters.",
+            "Invalid phone number.",
+            "Phone must have a maximun of 14 digits.",
+            "Address must have a maximun of 255 characters.",
+            "Customer number already exists.",
+            "Email already exists."
+        )
     try:
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -114,33 +127,33 @@ def insert_customer():
         if request.method == "POST":
 
             if not request.form["cust_no"]:
-                raise Exception("Customer Number is required.")
+                raise Exception(error[0])
             if not request.form["name"]:
-                raise Exception("Name is required.")
+                raise Exception(error[1])
             if not request.form["email"]:
-                raise Exception("Email is required.")
+                raise Exception(error[2])
             try:
                 int(request.form["cust_no"])
             except Exception as e:
-                raise Exception("Customer Number must be integer.")
+                raise Exception(error[3])
             if len(request.form["name"]) > 80:
-                raise Exception("Name must have a maximun of 80 characters.")
+                raise Exception(error[4])
             if len(request.form["email"]) > 254:
-                raise Exception("Email must have a maximun of 254 characters.")
+                raise Exception(error[5])
             phone = request.form["phone"]
             if phone:
                 if (phone[0] != "+" and not phone[0].isdigit()) or not phone[1:].isdigit():
-                    raise Exception("Invalid phone number.")
+                    raise Exception(error[6])
                 if len(phone) > 15:
-                    raise Exception("Phone must have a maximun of 14 digits.")
+                    raise Exception(error[7])
             if len(request.form["address"]) > 255:
-                raise Exception("Address must have a maximun of 255 characters.")
+                raise Exception(error[8])
             
             for unique in unique_attributes:
                 if (unique[0] == int(request.form["cust_no"])):
-                    raise Exception("Customer number already exists.")
+                    raise Exception(error[9])
                 if (unique[1] == request.form["email"]):
-                    raise Exception("Email already exists.")
+                    raise Exception(error[10])
             
             with pool.connection() as conn:
                 with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -170,7 +183,9 @@ def insert_customer():
             conn.close
             return redirect(url_for("list_customer"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        if e.args[0] in error:
+            return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/customer")
@@ -215,7 +230,7 @@ def list_customer():
                 ),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/customer/<string:customer>/delete", methods=["GET"])
@@ -228,7 +243,7 @@ def confirm_delete_customer(customer):
             data={"cust_no": customer},
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/customer/delete", methods=["POST"])
@@ -258,7 +273,7 @@ def delete_customer():
         conn.close
         return redirect(url_for("list_customer"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
     
 
 @app.route("/customer/<string:cust>/orders")
@@ -299,7 +314,7 @@ def list_customer_pending(cust):
                 ),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
     
 @app.route("/customer/<string:customer>/<string:orders>/pay", methods=["GET"])
 def confirm_pay(orders, customer):
@@ -311,7 +326,7 @@ def confirm_pay(orders, customer):
             data={"order_no": orders, "cust_no": customer},
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 
@@ -355,7 +370,7 @@ def ask_product():
             ),
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 def check_price(price):
@@ -378,6 +393,19 @@ def check_price(price):
 
 @app.route("/product/insert", methods=["GET", "POST"])
 def insert_product():
+    error = (
+            "SKU is required.",
+            "Name is required.",
+            "Price is required.",
+            "SKU must have a maximun of 25 characters.",
+            "Name must have a maximun of 200 characters.",
+            "EAN must be numeric and less than 13 digits.",
+            "SKU already exists",
+            "EAN already exists",
+            "Price must be numeric.",
+            "Price must have a maximun of 10 digits.",
+            "Price must have a maximun of 2 decimal digits."
+        )
     try:
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -392,26 +420,26 @@ def insert_product():
         if request.method == "POST":
 
             if not request.form["sku"]:
-                raise Exception("SKU is required.")
+                raise Exception(error[0])
             if not request.form["name"]:
-                raise Exception("Name is required.")
+                raise Exception(error[1])
             if not request.form["price"]:
-                raise Exception("Price is required.")
+                raise Exception(error[2])
             if len(request.form["sku"]) > 25:
-                raise Exception("SKU must have a maximun of 25 characters.")
+                raise Exception(error[3])
             if len(request.form["name"]) > 200:
-                raise Exception("Name must have a maximun of 200 characters.")
+                raise Exception(error[4])
             check_price(request.form["price"])
             if request.form["ean"]:
                 if not request.form["ean"].isdigit() or len(request.form["ean"]) > 13:
-                    raise Exception("EAN must be numeric and less than 13 digits.")
+                    raise Exception(error[5])
 
             for unique in unique_attributes:
                 if (unique[0] == request.form["sku"]):
-                    raise Exception("SKU already exists")
+                    raise Exception(error[6])
                 if request.form["ean"]:
                     if (unique[1] == int(request.form["ean"])):
-                        raise Exception("EAN already exists")
+                        raise Exception(error[7])
             
             with pool.connection() as conn:
                 with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -441,7 +469,9 @@ def insert_product():
             conn.close
             return redirect(url_for("list_product"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        if e.args[0] in error:
+            return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/product")
@@ -486,7 +516,7 @@ def list_product():
                 ),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/product/<string:product>/change", methods=["GET"])
@@ -519,11 +549,17 @@ def ask_change_product(product):
             ),
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/product/change", methods=["POST"])
 def change_product():
+    error = (
+            "Price is required.",
+            "Price must be numeric.",
+            "Price must have a maximun of 10 digits.",
+            "Price must have a maximun of 2 decimal digits."
+        )
     try:
         if not request.form["price"]:
             raise Exception("Price is required.")
@@ -551,7 +587,9 @@ def change_product():
         conn.close
         return redirect(url_for("list_product"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        if e.args[0] in error:
+            return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/product/<string:product>/delete", methods=["GET"])
@@ -564,7 +602,7 @@ def confirm_delete_product(product):
             data={"sku": product},
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/product/delete", methods=["POST"])
@@ -600,7 +638,7 @@ def delete_product():
         conn.close
         return redirect(url_for("list_product"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 
@@ -658,11 +696,20 @@ def ask_supplier():
                 ),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/supplier/insert", methods=["GET","POST"])
 def insert_supplier():
+    error = (
+            "TIN is required.",
+            "SKU is required.",
+            "TIN must have a maximun of 20 characters.",
+            "Name must have a maximun of 200 characters.",
+            "Address must have a maximun of 255 characters.",
+            "\tInvalid Date.\nDate format must be YYYY-MM-DD",
+            "TIN already exists"
+        )
     try:
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -676,24 +723,24 @@ def insert_supplier():
 
         if request.method == "POST":
             if not request.form["tin"]:
-                raise Exception("TIN is required.")
+                raise Exception(error[0])
             if not request.form["sku"]:
-                raise Exception("SKU is required.")
+                raise Exception(error[1])
             if len(request.form["tin"]) > 20:
-                raise Exception("TIN must have a maximun of 20 characters.")
+                raise Exception(error[2])
             if len(request.form["name"]) > 200:
-                raise Exception("Name must have a maximun of 200 characters.")
+                raise Exception(error[3])
             if len(request.form["address"]) > 255:
-                raise Exception("Address must have a maximun of 255 characters.")
+                raise Exception(error[4])
             if request.form["date"]:
                 try:
                     datetime.strptime(request.form["date"], "%Y-%m-%d")
                 except Exception as e:
-                    raise Exception("\tInvalid Date.\nDate format must be YYYY-MM-DD")
+                    raise Exception(error[5])
             
             for unique in unique_attributes:
                 if (unique[0] == request.form["tin"]):
-                    raise Exception("TIN already exists")
+                    raise Exception(error[6])
 
             with pool.connection() as conn:
                 with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -727,7 +774,9 @@ def insert_supplier():
             conn.close
             return redirect(url_for("list_supplier"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        if e.args[0] in error:
+            return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/supplier")
@@ -765,7 +814,7 @@ def list_supplier():
                 ),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/supplier/<string:supplier>/delete", methods=["GET"])
@@ -778,7 +827,7 @@ def confirm_delete_supplier(supplier):
             data={"tin": supplier},
         )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/supplier/delete", methods=["POST"])
@@ -801,7 +850,7 @@ def delete_supplier():
         conn.close
         return redirect(url_for("list_supplier"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 
@@ -872,11 +921,21 @@ def ask_orders():
                 back_action=url_for("list_orders"),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/orders/insert",  methods=["GET", "POST"])
 def insert_orders():
+    error = (
+            "Order Number is required.",
+            "Customer Number is required.",
+            "Date is required.",
+            "Order Number must be integer.",
+            "\tInvalid Date.\nDate format must be YYYY-MM-DD",
+            "Order number already exists",
+            "Quantity must be integer.",
+            "Order must include a product."
+        )
     try:
         with pool.connection() as conn:
             with conn.cursor(row_factory=namedtuple_row) as cur:
@@ -898,28 +957,24 @@ def insert_orders():
         if request.method == "POST":
 
             if not request.form["order_no"]:
-                raise Exception("Order Number is required.")
+                raise Exception(error[0])
             if not request.form["cust_no"]:
-                raise Exception("Customer Number is required.")
+                raise Exception(error[1])
             if not request.form["date"]:
-                raise Exception("Date is required.")
+                raise Exception(error[2])
             try:
                 int(request.form["order_no"])
             except Exception as e:
-                raise Exception("Order Number must be integer.")
-            try:
-                int(request.form["cust_no"])
-            except Exception as e:
-                raise Exception("Customer Number must be integer.")
+                raise Exception(error[3])
             
             try:
                 datetime.strptime(request.form["date"], "%Y-%m-%d")
             except Exception as e:
-                raise Exception("\tInvalid Date.\nDate format must be YYYY-MM-DD")
+                raise Exception(error[4])
                 
             for unique in unique_attributes:
                 if (unique[0] == int(request.form["order_no"])):
-                    raise Exception("Order number already exists")
+                    raise Exception(error[5])
             
             
             aux = False
@@ -929,11 +984,11 @@ def insert_orders():
                     try:
                         int(qty)
                     except Exception as e:
-                        raise Exception("Quantity must be integer.")
+                        raise Exception(error[6])
                     if int(qty) > 0:
                         aux = True
             if not aux:
-                raise Exception("Order must include a product.")
+                raise Exception(error[7])
 
 
             with pool.connection() as conn:
@@ -960,7 +1015,9 @@ def insert_orders():
             conn.close
             return redirect(url_for("list_orders"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        if e.args[0] in error:
+            return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/orders")
@@ -998,7 +1055,7 @@ def list_orders():
                 ),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
     
 @app.route("/orders/<string:orders>/contains")
 def list_order_products(orders):
@@ -1027,7 +1084,7 @@ def list_order_products(orders):
                 back_action=url_for("list_orders"),
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 
@@ -1049,7 +1106,7 @@ def pay():
         conn.close
         return redirect(url_for("list_customer"))
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 @app.route("/pay")
@@ -1075,7 +1132,7 @@ def list_pay():
                 title="Pay",
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
     
 @app.route("/contains")
 def list_contains():
@@ -1100,7 +1157,7 @@ def list_contains():
                 title="Contains",
             )
     except Exception as e:
-        return render_template("error.html", error=e)
+        return render_template("error.html", error="Unexpected error")
 
 
 
