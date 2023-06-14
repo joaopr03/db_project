@@ -1,0 +1,21 @@
+{% extends 'partial/base.html' %}
+{% block head %}
+  <style>
+  pre {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 1em;
+  }
+  </style>
+{% endblock %}
+{% block title %}<title>Error</title>{% endblock %}
+{% block content %}
+  <div class="page-center">
+    <img src="{{ url_for('static', filename='img/erro.png') }}" width="150" height="150">
+    <h1>Something went wrong</h1>
+    <pre><code>{{ error }}</code></pre>
+    <p class="horizontal-center">
+      <button class="button" onclick="history.back(); return false;">Try Again</button>
+    </p>
+  </div>
+{% endblock %}

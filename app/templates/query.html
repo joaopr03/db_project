@@ -1,0 +1,81 @@
+{% extends 'partial/base.html' %}
+{% block head %}
+  <style>
+  pre {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 1em;
+    width: fit-content;
+    font-size: 1.1em;
+  }
+  </style>
+{% endblock %}
+{% block title %}<title>{{ title }}</title>{% endblock %}
+{% block content %}
+  <nav class="top">
+    {% if back_action %}
+      <a class="top_button" href="{{ back_action }}">
+        {{ back_action_title }}
+      </a>
+    {% else %}
+      <a class="top_button" href="{{ url_for('homepage') }}">
+        Main Menu
+      </a>
+    {% endif %}
+  </nav>
+  <h1>
+    {{ title }}
+  </h1>
+  <h2>
+    {% for action in (page_actions|default([])) %}
+      <a class="button1" href="{{ action.link }}">
+        <span class="shadow"></span>
+        <span class="edge1"></span>
+        <span class="front1 text"> {{ action.title }}
+        </span>
+      </a>
+    {% endfor %}
+  </h2>
+  <p></p>
+  {% if query %}<pre><code>{{ query|e }}</code></pre>{% endif %}
+  <div class="table-container">
+    <table border="1px">
+      <thead>
+        <tr>
+          <tr>
+            {% for record in colnames %}<th>{{ record|replace("_"," ")|e }}</th>{% endfor %}
+            {% for action in (row_actions if row_actions else []) %}
+              <th></th>
+            {% endfor %}
+          </tr>
+        </tr>
+      </thead>
+      {% if cursor %}
+      <tbody>
+        {% for record in cursor %}
+          <tr>
+            {% for value in record %}
+              <td>
+                {%if title == 'Product' %}
+                  {% if loop.index0 == colnames.index('price') %}
+                    {{ value|e if value is not none else '' }}€
+                  {% else %}
+                  {{ value|e if value is not none else '' }}
+                  {% endif %}
+                {%else %}
+                {{ value|e if value is not none else '' }}
+                {% endif %}
+              </td>
+            {% endfor %}
+            {% for action in (row_actions|default([])) %}
+              <td class="{{ action.className }}">
+                <a class="{{ action.className }}" href="{{ action.link(record) }}">{{ action.name }}</a>
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </div>
+{% endblock %}
