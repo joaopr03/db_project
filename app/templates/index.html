@@ -1,0 +1,77 @@
+{% extends 'partial/base.html' %}
+{% block head %}
+  <style>
+  .query-container {
+    min-width: 80%;
+  }
+  </style>
+  <div style = "position:relative; top: 3vw; text-align: center;">
+    <img src="{{ url_for('static', filename='img/database.png') }}" width="150" height="150">
+    <h1>Data Base 9090</h1>
+  </div>
+{% endblock %}
+{% block content %}
+  
+  <div class="container">
+    <a class = "button" href="{{ url_for('list_customer') }}">
+      <span class="shadow"></span>
+      <span class="edge"></span>
+      <span class="front text"> Customer
+      </span>
+    </a>
+
+    <a class = "button" href="{{ url_for('list_product') }}">
+      <span class="shadow"></span>
+      <span class="edge"></span>
+      <span class="front text"> Product
+      </span>
+    </a>
+
+    <a class = "button" href="{{ url_for('list_supplier') }}">
+      <span class="shadow"></span>
+      <span class="edge"></span>
+      <span class="front text"> Supplier
+      </span>
+    </a>
+
+    <a class = "button" href="{{ url_for('list_orders') }}">
+      <span class="shadow"></span>
+      <span class="edge"></span>
+      <span class="front text"> Orders
+      </span>
+    </a>
+
+    <a class = "button" href="{{ url_for('list_contains') }}">
+      <span class="shadow"></span>
+      <span class="edge"></span>
+      <span class="front text"> Contains
+      </span>
+    </a>
+
+    <a class = "button" href="{{ url_for('list_pay') }}">
+      <span class="shadow"></span>
+      <span class="edge"></span>
+      <span class="front text"> Pay
+      </span>
+    </a>
+  </div>
+
+  <div style = "position: relative; top: 5vw; text-align: center;">
+    <div>
+      <h3 style = "color: rgb(10,10,10, 0.65);">About us</h3>
+    </div>
+    <div class="social-links">
+      <div id="github" class="social-btn flex-center">
+        <img src="{{ url_for('static', filename='img/profile-user.png') }}" width="30" height="30"><span>Diogo Ribeiro</span>
+      </div>
+    
+      <div id="github" class="social-btn flex-center">
+        <img src="{{ url_for('static', filename='img/profile-user.png') }}" width="30" height="30"><span>João Rodrigues</span>
+      </div>
+  
+      <div id="github" class="social-btn flex-center">
+        <img src="{{ url_for('static', filename='img/profile-user.png') }}" width="30" height="30"><span>Gustavo Henriques</span>
+    </div>
+  </div>
+  </div>
+{% endblock %}
