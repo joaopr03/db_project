@@ -239,7 +239,7 @@ def confirm_delete_customer(customer):
         return render_template(
             "delete.html",
             action_url=url_for("delete_customer"),
-            title=f"Delete Customer '{customer}'?",
+            title=f"Delete Customer '{customer}' and ALL its dependencies?",
             data={"cust_no": customer},
         )
     except Exception as e:
@@ -598,7 +598,7 @@ def confirm_delete_product(product):
         return render_template(
             "delete.html",
             action_url=url_for("delete_product"),
-            title=f"Delete Product '{product}'?",
+            title=f"Delete Product '{product}' and ALL its dependencies?",
             data={"sku": product},
         )
     except Exception as e:
@@ -703,7 +703,6 @@ def ask_supplier():
 def insert_supplier():
     error = (
             "TIN is required.",
-            "SKU is required.",
             "TIN must have a maximun of 20 characters.",
             "Name must have a maximun of 200 characters.",
             "Address must have a maximun of 255 characters.",
@@ -724,29 +723,31 @@ def insert_supplier():
         if request.method == "POST":
             if not request.form["tin"]:
                 raise Exception(error[0])
-            if not request.form["sku"]:
-                raise Exception(error[1])
             if len(request.form["tin"]) > 20:
-                raise Exception(error[2])
+                raise Exception(error[1])
             if len(request.form["name"]) > 200:
-                raise Exception(error[3])
+                raise Exception(error[2])
             if len(request.form["address"]) > 255:
-                raise Exception(error[4])
+                raise Exception(error[3])
             if request.form["date"]:
                 try:
                     datetime.strptime(request.form["date"], "%Y-%m-%d")
                 except Exception as e:
-                    raise Exception(error[5])
+                    raise Exception(error[4])
             
             for unique in unique_attributes:
                 if (unique[0] == request.form["tin"]):
-                    raise Exception(error[6])
+                    raise Exception(error[5])
 
             with pool.connection() as conn:
                 with conn.cursor(row_factory=namedtuple_row) as cur:
                     queries = """
-                        INSERT INTO supplier (tin, sku) VALUES (%(tin)s, %(sku)s);
+                        INSERT INTO supplier (tin) VALUES (%(tin)s);
                         """
+                    if request.form["sku"]:
+                        queries += """
+                            UPDATE supplier SET sku = %(sku)s WHERE tin = %(tin)s;
+                            """
                     if request.form["name"]:
                         queries += """
                             UPDATE supplier SET name = %(name)s WHERE tin = %(tin)s;
@@ -823,7 +824,7 @@ def confirm_delete_supplier(supplier):
         return render_template(
             "delete.html",
             action_url=url_for("delete_supplier"),
-            title=f"Delete supplier '{supplier}'?",
+            title=f"Delete supplier '{supplier}' and ALL its dependencies?",
             data={"tin": supplier},
         )
     except Exception as e:
