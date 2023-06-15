@@ -682,7 +682,7 @@ def ask_supplier():
                         "required": False,
                     },
                     {
-                        "label": "Product SKU:*",
+                        "label": "Product SKU:",
                         "name": "sku",
                         "type": "select",
                         "required": True,
