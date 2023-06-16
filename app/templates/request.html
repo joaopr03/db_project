@@ -1,0 +1,42 @@
+{% extends 'partial/base.html' %}
+{% block title %}<title>{{ title }}</title>{% endblock %}
+{% block content %}
+  <nav class="top">
+    <a class="top_button" href="{{ back_action }}">
+      {{ back_action_title }}
+    </a>
+  </nav>
+  <h1>{{ title }}</h1>
+  <form action="{{ action_url|default('') }}" method="post">
+    {% for field in fields %}
+      {% if field.type != 'hidden' %}
+        <div class="form-field">
+          <label>{{ field.label }}</label>
+          {% if field.type == 'select' %}
+            <select name="{{ field.name }}">
+              <option />
+              {% for value in field.options|default([]) %}
+                <option value="{{ value[0] }}"
+                        {% if field.selected == value[0] %}selected{% endif %}>
+                  {{ value[1] }}
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="{{ field.type|default('text') }}"
+                  name="{{ field.name }}"
+                  value="{{ field.value }}"/>
+          {% endif %}
+        </div>
+      {% else %}
+        <input type="hidden" name="{{ field.name }}" value="{{ field.value|e }}" />
+      {% endif %}
+    {% endfor %}
+    <p>
+      <b>*</b> - Required Fields
+    </p>
+    <p class="horizontal-center">
+      <input type="submit" value="{{ submit }}" />
+    </p>
+  </form>
+{% endblock %}
