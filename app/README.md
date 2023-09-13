@@ -1,0 +1,2 @@
+# Set up the app
+Follow the steps on this website https://github.com/bdist/db-workspace and replace the existing app in https://github.com/bdist/db-workspace with the app in https://github.com/joaopr03/db_project/
